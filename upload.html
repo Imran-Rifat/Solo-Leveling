@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Analysis - Solo Leveling</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .career-selection {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+        
+        .career-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .career-card {
+            border: 2px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .career-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+        
+        .career-card.selected {
+            border-color: var(--primary-color);
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .career-card h3 {
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .career-card p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+        
+        .analysis-results {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-top: 2rem;
+        }
+        
+        .skill-gap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .skill-category h3 {
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+        
+        .progress-score {
+            text-align: center;
+            padding: 2rem;
+            background: var(--bg-light);
+            border-radius: var(--border-radius);
+        }
+        
+        .score-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary-color) 0% 75%, #e2e8f0 75% 100%);
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <h2>SOLO LEVELING</h2>
+                <span>AI Career Path Builder</span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="upload.html" class="active">Career Analysis</a>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="roadmap.html">Roadmap</a>
+                <a href="jobs.html">Jobs</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="upload-section">
+            <h1>AI Career Path Analysis</h1>
+            <p>Upload your CV and select your target career to get a personalized learning path</p>
+            
+            <!-- Career Selection -->
+            <div class="career-selection" id="careerSelection">
+                <h2>Choose Your Target Career</h2>
+                <p>Select the career path you want to pursue</p>
+                
+                <div class="career-grid" id="careerGrid">
+                    <!-- Careers will be loaded by JavaScript -->
+                </div>
+                
+                <div id="careerError" style="color: var(--danger); display: none;">
+                    Please select a career path to continue
+                </div>
+            </div>
+
+            <!-- File Upload -->
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-content">
+                    <div class="upload-icon">📄</div>
+                    <h3>Upload Your CV/Resume</h3>
+                    <p>We'll analyze your current skills and create a personalized path to your target career</p>
+                    <button class="browse-button" onclick="document.getElementById('fileInput').click()">
+                        Browse Files
+                    </button>
+                    <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" style="display: none;">
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div class="parsing-status" id="parsingStatus" style="display: none;">
+                <div class="status-header">
+                    <h3>AI Career Analysis in Progress...</h3>
+                    <div class="spinner"></div>
+                </div>
+                <div class="status-steps">
+                    <div class="step active">
+                        <span class="step-number">1</span>
+                        <span class="step-text">Extracting CV content</span>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">2</span>
+                        <span class="step-text">Analyzing current skills</span>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">3</span>
+                        <span class="step-text">Identifying skill gaps</span>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">4</span>
+                        <span class="step-text">Generating career plan</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="analysis-results" id="analysisResults" style="display: none;">
+                <h2>Your Career Analysis</h2>
+                <div id="resultsContent">
+                    <!-- Results will be populated here -->
+                </div>
+                <button class="confirm-button" onclick="generateRoadmap()">
+                    Generate Learning Roadmap
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/upload.js"></script>
+</body>
+</html>

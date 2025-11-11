@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Interface - Solo Leveling</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/learning.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <h2>SOLO LEVELING</h2>
+                <span>AI Career Path Builder</span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="upload.html">Get Started</a>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="roadmap.html">Roadmap</a>
+                <a href="jobs.html">Jobs</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="learning-container">
+        <div class="learning-sidebar">
+            <div class="module-info">
+                <h1 id="moduleTitle">HTML5 & CSS3 Fundamentals</h1>
+                <div class="module-meta">
+                    <span class="difficulty-badge beginner">Beginner</span>
+                    <span class="duration">Estimated: 8 hours</span>
+                </div>
+                <p id="moduleDescription">Learn semantic HTML and modern CSS including Flexbox and Grid</p>
+                
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <span>Your Progress</span>
+                        <span id="progressPercentage">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-navigation">
+                <h3>Lesson Content</h3>
+                <div class="lesson-list" id="lessonList">
+                    <!-- Lessons will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <div class="learning-content">
+            <div class="content-tabs">
+                <button class="tab-button active" data-tab="tutorial">Tutorial</button>
+                <button class="tab-button" data-tab="exercise">Exercise</button>
+                <button class="tab-button" data-tab="code">Code Editor</button>
+                <button class="tab-button" data-tab="resources">Resources</button>
+            </div>
+
+            <div class="tab-content active" id="tutorialTab">
+                <div class="tutorial-content" id="tutorialContent">
+                    <!-- Tutorial content will be loaded here -->
+                </div>
+            </div>
+
+            <div class="tab-content" id="exerciseTab">
+                <div class="exercise-content" id="exerciseContent">
+                    <h3>Practice Exercise</h3>
+                    <div class="exercise-description" id="exerciseDescription">
+                        <!-- Exercise content will be loaded here -->
+                    </div>
+                    <div class="exercise-editor">
+                        <textarea id="exerciseCode" placeholder="Write your code here..."></textarea>
+                    </div>
+                    <div class="exercise-actions">
+                        <button class="run-button" onclick="runCode()">Run Code</button>
+                        <button class="submit-button" onclick="submitExercise()">Submit Solution</button>
+                    </div>
+                    <div class="output-container">
+                        <h4>Output:</h4>
+                        <pre id="codeOutput"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="codeTab">
+                <div class="code-editor-container">
+                    <div class="editor-header">
+                        <select id="languageSelect">
+                            <option value="html">HTML</option>
+                            <option value="css">CSS</option>
+                            <option value="javascript">JavaScript</option>
+                            <option value="python">Python</option>
+                        </select>
+                        <button class="run-button" onclick="runCustomCode()">Run</button>
+                    </div>
+                    <textarea id="codeEditor"></textarea>
+                    <div class="output-container">
+                        <h4>Output:</h4>
+                        <pre id="customOutput"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="resourcesTab">
+                <div class="resources-content" id="resourcesContent">
+                    <h3>Additional Resources</h3>
+                    <div class="resources-list" id="resourcesList">
+                        <!-- Resources will be populated -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="navigation-actions">
+                <button class="nav-button prev" onclick="previousLesson()" disabled>
+                    ← Previous
+                </button>
+                <button class="nav-button next" onclick="nextLesson()">
+                    Next →
+                </button>
+                <button class="complete-button" onclick="completeModule()">
+                    Mark Complete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script src="js/learning.js"></script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skills Dashboard - Solo Leveling</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <h2>SOLO LEVELING</h2>
+                <span>AI Career Path Builder</span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="upload.html">Get Started</a>
+                <a href="dashboard.html" class="active">Dashboard</a>
+                <a href="roadmap.html">Roadmap</a>
+                <a href="jobs.html">Jobs</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <h1>Skills Dashboard</h1>
+            <div class="user-info">
+                <span>Target Role: <strong id="targetRole">Full-Stack Developer</strong></span>
+                <button class="edit-target" onclick="editTargetRole()">Edit</button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card skills-comparison">
+                <h2>Current vs Required Skills</h2>
+                <div class="chart-container">
+                    <canvas id="skillsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card skill-breakdown">
+                <h2>Skill Gap Analysis</h2>
+                <div class="skill-categories">
+                    <div class="category">
+                        <h3>🟢 Mastered Skills</h3>
+                        <div class="skills-list" id="masteredSkills">
+                            <!-- Mastered skills will be populated -->
+                        </div>
+                    </div>
+                    <div class="category">
+                        <h3>🟡 Learning Skills</h3>
+                        <div class="skills-list" id="learningSkills">
+                            <!-- Learning skills will be populated -->
+                        </div>
+                    </div>
+                    <div class="category">
+                        <h3>🔴 Missing Skills</h3>
+                        <div class="skills-list" id="missingSkills">
+                            <!-- Missing skills will be populated -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card progress-overview">
+                <h2>Learning Progress</h2>
+                <div class="progress-stats">
+                    <div class="stat">
+                        <div class="stat-value" id="completionRate">0%</div>
+                        <div class="stat-label">Overall Completion</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="skillsLearned">0</div>
+                        <div class="stat-label">Skills Learned</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="hoursSpent">0</div>
+                        <div class="stat-label">Hours Invested</div>
+                    </div>
+                </div>
+                <div class="progress-chart">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card recommendations">
+                <h2>AI Recommendations</h2>
+                <div class="recommendation-list">
+                    <div class="recommendation">
+                        <div class="rec-icon">🎯</div>
+                        <div class="rec-content">
+                            <h4>Focus on React.js</h4>
+                            <p>High demand in Full-Stack roles. Start with fundamentals.</p>
+                        </div>
+                    </div>
+                    <div class="recommendation">
+                        <div class="rec-icon">⚡</div>
+                        <div class="rec-content">
+                            <h4>Practice Database Design</h4>
+                            <p>Essential for backend development. Work on SQL queries.</p>
+                        </div>
+                    </div>
+                    <div class="recommendation">
+                        <div class="rec-icon">📈</div>
+                        <div class="rec-content">
+                            <h4>Build Portfolio Projects</h4>
+                            <p>Create 2-3 full-stack applications to showcase skills.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

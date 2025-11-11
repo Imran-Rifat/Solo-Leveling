@@ -1,0 +1,379 @@
+// upload.js - FIXED VERSION
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔵 upload.js: DOM Content Loaded');
+    initializeUploadArea();
+});
+
+let uploadInProgress = false;
+
+function initializeUploadArea() {
+    console.log('🔵 initializeUploadArea: Starting');
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+
+    if (!uploadArea || !fileInput) {
+        console.error('❌ initializeUploadArea: Required DOM elements not found');
+        return;
+    }
+
+    console.log('🔵 initializeUploadArea: DOM elements found, setting up event listeners');
+
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', function(e) {
+        console.log('🔵 uploadArea: dragover event');
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+    });
+
+    uploadArea.addEventListener('dragleave', function() {
+        console.log('🔵 uploadArea: dragleave event');
+        uploadArea.classList.remove('drag-over');
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+        console.log('🔵 uploadArea: drop event');
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        console.log('🔵 uploadArea: Files dropped:', files.length, files[0]?.name);
+        
+        if (files.length > 0 && !uploadInProgress) {
+            handleFileUpload(files[0]);
+        } else {
+            console.log('🔵 uploadArea: Skipping drop - upload in progress:', uploadInProgress);
+        }
+    });
+
+    fileInput.addEventListener('change', function(e) {
+        console.log('🔵 fileInput: change event');
+        if (e.target.files.length > 0 && !uploadInProgress) {
+            console.log('🔵 fileInput: File selected:', e.target.files[0].name);
+            handleFileUpload(e.target.files[0]);
+        } else {
+            console.log('🔵 fileInput: Skipping change - upload in progress:', uploadInProgress);
+        }
+    });
+
+    console.log('🔵 initializeUploadArea: Completed successfully');
+}
+
+async function handleFileUpload(file) {
+    console.log('🟡 handleFileUpload: Starting with file:', file.name, 'Type:', file.type, 'Size:', file.size);
+    
+    if (uploadInProgress) {
+        console.log('❌ handleFileUpload: Upload already in progress, skipping');
+        return;
+    }
+    
+    uploadInProgress = true;
+    console.log('🟡 handleFileUpload: Set uploadInProgress = true');
+
+    // Quick validation
+    const validTypes = ['application/pdf', 'application/msword', 
+                       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                       'text/plain']; // Added text/plain
+    
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(pdf|doc|docx|txt)$/i)) {
+        console.log('❌ handleFileUpload: Invalid file type:', file.type);
+        showNotification('Please upload PDF or Word file', 'error');
+        uploadInProgress = false;
+        return;
+    }
+
+    console.log('🟡 handleFileUpload: File validation passed');
+
+    // Show loading immediately
+    console.log('🟡 handleFileUpload: Showing loading UI');
+    document.getElementById('uploadArea').style.display = 'none';
+    document.getElementById('parsingStatus').style.display = 'block';
+    
+    // Update progress steps
+    updateProgressStep(1);
+    
+    try {
+        console.log('🟡 handleFileUpload: Starting backend process');
+        
+        // Update progress
+        updateProgressStep(2);
+        
+        // Try backend with reasonable timeout
+        const backendResponse = await Promise.race([
+            processWithBackend(file),
+            new Promise((_, reject) => {
+                setTimeout(() => {
+                    console.log('⏰ Backend timeout after 15 seconds');
+                    reject(new Error('Backend timeout'));
+                }, 15000);
+            })
+        ]);
+        
+        console.log('✅ handleFileUpload: Backend succeeded');
+        updateProgressStep(4);
+        showSkillsFromResponse(backendResponse);
+        
+    } catch (error) {
+        console.log('❌ handleFileUpload: Backend failed:', error.message);
+        // Use mock data as fallback
+        completeWithMockData();
+    }
+}
+
+function updateProgressStep(step) {
+    const steps = document.querySelectorAll('.step');
+    steps.forEach((stepElement, index) => {
+        if (index < step) {
+            stepElement.classList.add('active');
+        } else {
+            stepElement.classList.remove('active');
+        }
+    });
+}
+
+async function processWithBackend(file) {
+    console.log('🔵 processWithBackend: Starting backend processing');
+    console.log('🔵 processWithBackend: File:', file.name, 'Target role:', appState.selectedCategory);
+    
+    const formData = new FormData();
+    formData.append('cv', file);
+    formData.append('target_role', appState.selectedCategory || 'fullstack');
+    
+    console.log('🔵 processWithBackend: FormData created, making fetch request...');
+
+    try {
+        updateProgressStep(3);
+        
+        const response = await fetch('http://localhost:5000/api/skills/analyze-cv', {
+            method: 'POST',
+            body: formData,
+        });
+
+        console.log('🔵 processWithBackend: Response status:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.log('❌ processWithBackend: Response not OK:', response.status, errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ processWithBackend: Success! Data received');
+        
+        return data;
+        
+    } catch (error) {
+        console.log('❌ processWithBackend: Fetch failed:', error.message);
+        throw error;
+    }
+}
+
+function completeWithMockData() {
+    console.log('🟡 completeWithMockData: Starting mock data fallback');
+    
+    const mockSkills = getMockSkillsForCategory(appState.selectedCategory || 'fullstack');
+    console.log('🟡 completeWithMockData: Mock skills:', mockSkills);
+    
+    const mockResponse = {
+        analysis: {
+            identified_skills: mockSkills.map(skill => ({skill, level: 'intermediate', category: 'general'}))
+        },
+        user_id: `mock_${Date.now()}`,
+        target_role: appState.selectedCategory || 'fullstack'
+    };
+    
+    console.log('🟡 completeWithMockData: Mock response created');
+    showSkillsFromResponse(mockResponse);
+}
+
+function showSkillsFromResponse(response) {
+    console.log('🔵 showSkillsFromResponse: Starting');
+    console.log('🔵 showSkillsFromResponse: Response data:', response);
+    
+    // Hide loading, show skills
+    console.log('🔵 showSkillsFromResponse: Hiding loading, showing skills');
+    document.getElementById('parsingStatus').style.display = 'none';
+    
+    // Store data
+    appState.userId = response.user_id;
+    appState.targetRole = response.target_role;
+    console.log('🔵 showSkillsFromResponse: App state updated - UserID:', appState.userId, 'TargetRole:', appState.targetRole);
+    
+    // Show skills confirmation
+    const skills = response.analysis.identified_skills || [];
+    console.log('🔵 showSkillsFromResponse: Skills to display:', skills);
+    showSkillsConfirmation(skills);
+    
+    uploadInProgress = false;
+    console.log('✅ showSkillsFromResponse: Completed, uploadInProgress = false');
+}
+
+function showSkillsConfirmation(skills) {
+    console.log('🔵 showSkillsConfirmation: Starting with skills:', skills);
+    
+    const skillsGrid = document.getElementById('skillsGrid');
+    const manualSkills = document.getElementById('manualSkills');
+    
+    if (!skillsGrid || !manualSkills) {
+        console.error('❌ showSkillsConfirmation: Skills grid or manual skills element not found');
+        return;
+    }
+
+    // Convert to simple array
+    const skillNames = skills.map(skill => {
+        if (typeof skill === 'string') {
+            console.log('🔵 showSkillsConfirmation: String skill:', skill);
+            return skill;
+        } else {
+            console.log('🔵 showSkillsConfirmation: Object skill:', skill.skill);
+            return skill.skill || 'Unknown Skill';
+        }
+    });
+    
+    console.log('🔵 showSkillsConfirmation: Final skill names:', skillNames);
+    
+    // Display skills
+    console.log('🔵 showSkillsConfirmation: Populating skills grid');
+    skillsGrid.innerHTML = skillNames.map(skill => `
+        <div class="skill-item selected">
+            <input type="checkbox" id="skill-${skill.replace(/\s+/g, '-').toLowerCase()}" checked>
+            <label for="skill-${skill.replace(/\s+/g, '-').toLowerCase()}">${skill}</label>
+        </div>
+    `).join('') + `
+        <div class="skill-input">
+            <input type="text" id="newSkill" placeholder="Add other skills...">
+            <button onclick="addCustomSkill()">Add</button>
+        </div>
+    `;
+
+    console.log('🔵 showSkillsConfirmation: Adding click handlers to skill items');
+    
+    // Add click handlers
+    skillsGrid.querySelectorAll('.skill-item').forEach((item, index) => {
+        console.log('🔵 showSkillsConfirmation: Adding handler to skill item', index);
+        item.addEventListener('click', function() {
+            console.log('🔵 Skill item clicked:', this.textContent);
+            const checkbox = this.querySelector('input[type="checkbox"]');
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                this.classList.toggle('selected', checkbox.checked);
+                console.log('🔵 Skill item toggled - checked:', checkbox.checked);
+            }
+        });
+    });
+
+    console.log('🔵 showSkillsConfirmation: Showing manual skills section');
+    manualSkills.style.display = 'block';
+    console.log('✅ showSkillsConfirmation: Completed successfully');
+}
+
+function addCustomSkill() {
+    console.log('🔵 addCustomSkill: Function called');
+    
+    const input = document.getElementById('newSkill');
+    if (!input) {
+        console.error('❌ addCustomSkill: newSkill input not found');
+        return;
+    }
+    
+    const skill = input.value.trim();
+    console.log('🔵 addCustomSkill: Input value:', skill);
+    
+    if (skill) {
+        const skillsGrid = document.getElementById('skillsGrid');
+        if (!skillsGrid) {
+            console.error('❌ addCustomSkill: skillsGrid not found');
+            return;
+        }
+        
+        console.log('🔵 addCustomSkill: Creating new skill element');
+        const newSkill = document.createElement('div');
+        newSkill.className = 'skill-item selected';
+        newSkill.innerHTML = `
+            <input type="checkbox" id="skill-${skill.replace(/\s+/g, '-').toLowerCase()}" checked>
+            <label for="skill-${skill.replace(/\s+/g, '-').toLowerCase()}">${skill}</label>
+        `;
+        
+        console.log('🔵 addCustomSkill: Inserting new skill before input container');
+        skillsGrid.insertBefore(newSkill, skillsGrid.lastElementChild);
+        input.value = '';
+        
+        // Add click handler to new skill
+        newSkill.addEventListener('click', function() {
+            const checkbox = this.querySelector('input[type="checkbox"]');
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                this.classList.toggle('selected', checkbox.checked);
+            }
+        });
+        
+        console.log('✅ addCustomSkill: New skill added successfully');
+    } else {
+        console.log('🔵 addCustomSkill: Empty skill input, skipping');
+    }
+}
+
+function confirmSkills() {
+    console.log('🔵 confirmSkills: Function called');
+    
+    const selectedSkills = [];
+    const checkboxes = document.querySelectorAll('.skill-item input:checked');
+    
+    console.log('🔵 confirmSkills: Found', checkboxes.length, 'checked checkboxes');
+    
+    checkboxes.forEach((checkbox, index) => {
+        const skillName = checkbox.id.replace('skill-', '').replace(/-/g, ' ');
+        selectedSkills.push(skillName);
+        console.log('🔵 confirmSkills: Checkbox', index, 'skill:', skillName);
+    });
+
+    if (selectedSkills.length === 0) {
+        console.log('❌ confirmSkills: No skills selected');
+        showNotification('Please select at least one skill', 'warning');
+        return;
+    }
+
+    console.log('🔵 confirmSkills: Selected skills:', selectedSkills);
+    
+    appState.userSkills = selectedSkills;
+    saveState();
+    console.log('🔵 confirmSkills: App state saved');
+    
+    showNotification('Redirecting to dashboard...', 'success');
+    console.log('🔵 confirmSkills: Setting redirect timeout');
+    
+    setTimeout(() => {
+        console.log('🔵 confirmSkills: Redirecting to dashboard.html');
+        window.location.href = 'dashboard.html';
+    }, 1000);
+}
+
+function getMockSkillsForCategory(category) {
+    console.log('🔵 getMockSkillsForCategory: Getting skills for category:', category);
+    
+    const skills = {
+        fullstack: ['HTML5', 'CSS3', 'JavaScript', 'React', 'Node.js', 'Git'],
+        datascience: ['Python', 'Pandas', 'SQL', 'Statistics', 'Machine Learning'],
+        machinelearning: ['Python', 'TensorFlow', 'Neural Networks', 'Data Science'],
+        mobile: ['React Native', 'Mobile UI', 'JavaScript', 'APIs'],
+        devops: ['Docker', 'AWS', 'Linux', 'Python', 'CI/CD']
+    };
+    
+    const result = skills[category] || skills.fullstack;
+    console.log('🔵 getMockSkillsForCategory: Returning skills:', result);
+    return result;
+}
+
+function resetUpload() {
+    console.log('🔵 resetUpload: Function called');
+    
+    uploadInProgress = false;
+    console.log('🔵 resetUpload: uploadInProgress = false');
+    
+    document.getElementById('uploadArea').style.display = 'block';
+    document.getElementById('parsingStatus').style.display = 'none';
+    document.getElementById('manualSkills').style.display = 'none';
+    
+    console.log('✅ resetUpload: UI reset completed');
+}
+
+console.log('✅ upload.js: Script loaded successfully');

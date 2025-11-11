@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Upload Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Frontend Upload Test</h1>
+    
+    <input type="file" id="testFileInput" accept=".pdf,.doc,.docx,.txt">
+    <button onclick="testUpload()">Test Upload</button>
+    
+    <div id="result"></div>
+
+    <script>
+        async function testUpload() {
+            const fileInput = document.getElementById('testFileInput');
+            const resultDiv = document.getElementById('result');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<div class="error">Please select a file</div>';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            resultDiv.innerHTML = '<div>Uploading... ' + file.name + '</div>';
+            
+            try {
+                const formData = new FormData();
+                formData.append('cv', file);
+                formData.append('target_role', 'fullstack');
+                
+                const response = await fetch('http://localhost:5000/api/skills/analyze-cv', {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        ✅ Upload Successful!<br>
+                        User ID: ${data.user_id}<br>
+                        AI Used: ${data.ai_used}<br>
+                        Skills Found: ${data.analysis.identified_skills.length}
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Upload Failed: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
