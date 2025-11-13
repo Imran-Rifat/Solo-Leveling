@@ -5,6 +5,300 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Solo Leveling - AI Career Path Builder</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .profile-setup-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
+
+        .setup-step {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .setup-step.active {
+            display: block;
+        }
+
+        .step-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .step-header h2 {
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .step-header p {
+            color: var(--text-light);
+        }
+
+        .career-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .career-card {
+            border: 2px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .career-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .career-card.selected {
+            border-color: var(--primary-color);
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .career-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .career-card h3 {
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .career-card p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .career-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+        }
+
+        .salary {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .growth {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .user-info-form {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-area {
+            border: 2px dashed #e2e8f0;
+            border-radius: var(--border-radius);
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background: rgba(102, 126, 234, 0.02);
+        }
+
+        .upload-area.drag-over {
+            border-color: var(--primary-color);
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-area h3 {
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .upload-area p {
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+        }
+
+        .browse-button {
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+
+        .browse-button:hover {
+            background: var(--secondary-color);
+        }
+
+        .file-info {
+            display: none;
+            background: var(--bg-light);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin-top: 1rem;
+        }
+
+        .file-info.active {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .remove-file {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .setup-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+
+        .back-button {
+            background: transparent;
+            border: 1px solid var(--text-light);
+            color: var(--text-light);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .back-button:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .next-button {
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+
+        .next-button:hover {
+            background: var(--secondary-color);
+        }
+
+        .next-button:disabled {
+            background: var(--text-light);
+            cursor: not-allowed;
+        }
+
+        .loading-step {
+            text-align: center;
+            padding: 3rem 2rem;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 2rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-step h3 {
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        .loading-step p {
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            margin: 0 0.5rem;
+            transition: var(--transition);
+        }
+
+        .step-dot.active {
+            background: var(--primary-color);
+        }
+
+        .step-dot.completed {
+            background: var(--success);
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -15,95 +309,421 @@
             </div>
             <div class="nav-links">
                 <a href="index.html" class="active">Home</a>
-                <a href="upload.html">Get Started</a>
                 <a href="dashboard.html">Dashboard</a>
                 <a href="roadmap.html">Roadmap</a>
                 <a href="jobs.html">Jobs</a>
+                <a href="profile.html">Profile</a>
             </div>
         </div>
     </nav>
 
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Level Up Your Career</h1>
-            <p>Bridge the gap between your current skills and dream job requirements with AI-powered personalized learning paths</p>
+    <div class="profile-setup-container">
+        <div class="step-indicator">
+            <div class="step-dot active" id="step1Dot"></div>
+            <div class="step-dot" id="step2Dot"></div>
+            <div class="step-dot" id="step3Dot"></div>
+            <div class="step-dot" id="step4Dot"></div>
+        </div>
+
+        <!-- Step 1: Career Selection -->
+        <div class="setup-step active" id="step1">
+            <div class="step-header">
+                <h2>Choose Your Career Path</h2>
+                <p>Select your target career to get a personalized learning roadmap</p>
+            </div>
+
+            <div class="career-grid" id="careerGrid">
+                <div class="career-card" data-career="fullstack">
+                    <div class="career-icon">💻</div>
+                    <h3>Full-Stack Developer</h3>
+                    <p>Build complete web applications with frontend and backend technologies</p>
+                    <div class="career-meta">
+                        <span class="salary">$75K - $130K</span>
+                        <span class="growth">+22% Growth</span>
+                    </div>
+                </div>
+                <div class="career-card" data-career="frontend">
+                    <div class="career-icon">🎨</div>
+                    <h3>Frontend Developer</h3>
+                    <p>Create engaging user interfaces and experiences for web applications</p>
+                    <div class="career-meta">
+                        <span class="salary">$65K - $110K</span>
+                        <span class="growth">+18% Growth</span>
+                    </div>
+                </div>
+                <div class="career-card" data-career="backend">
+                    <div class="career-icon">⚙️</div>
+                    <h3>Backend Developer</h3>
+                    <p>Develop server-side logic, databases, and APIs for web applications</p>
+                    <div class="career-meta">
+                        <span class="salary">$70K - $120K</span>
+                        <span class="growth">+20% Growth</span>
+                    </div>
+                </div>
+                <div class="career-card" data-career="datascience">
+                    <div class="career-icon">📊</div>
+                    <h3>Data Scientist</h3>
+                    <p>Extract insights from data using statistical analysis and machine learning</p>
+                    <div class="career-meta">
+                        <span class="salary">$85K - $150K</span>
+                        <span class="growth">+31% Growth</span>
+                    </div>
+                </div>
+                <div class="career-card" data-career="machinelearning">
+                    <div class="career-icon">🤖</div>
+                    <h3>Machine Learning Engineer</h3>
+                    <p>Design and implement AI models and machine learning systems</p>
+                    <div class="career-meta">
+                        <span class="salary">$95K - $160K</span>
+                        <span class="growth">+40% Growth</span>
+                    </div>
+                </div>
+                <div class="career-card" data-career="mobile">
+                    <div class="career-icon">📱</div>
+                    <h3>Mobile Developer</h3>
+                    <p>Create applications for iOS and Android platforms</p>
+                    <div class="career-meta">
+                        <span class="salary">$70K - $120K</span>
+                        <span class="growth">+19% Growth</span>
+                    </div>
+                </div>
+                <div class="career-card" data-career="devops">
+                    <div class="career-icon">🔧</div>
+                    <h3>DevOps Engineer</h3>
+                    <p>Automate and optimize development, testing, and deployment processes</p>
+                    <div class="career-meta">
+                        <span class="salary">$80K - $140K</span>
+                        <span class="growth">+25% Growth</span>
+                    </div>
+                </div>
+                <div class="career-card" data-career="cybersecurity">
+                    <div class="career-icon">🔒</div>
+                    <h3>Cyber Security Analyst</h3>
+                    <p>Protect systems and networks from cyber threats and attacks</p>
+                    <div class="career-meta">
+                        <span class="salary">$75K - $130K</span>
+                        <span class="growth">+33% Growth</span>
+                    </div>
+                </div>
+                <div class="career-card" data-career="uxui">
+                    <div class="career-icon">🎯</div>
+                    <h3>UX/UI Designer</h3>
+                    <p>Design intuitive and visually appealing user interfaces and experiences</p>
+                    <div class="career-meta">
+                        <span class="salary">$60K - $110K</span>
+                        <span class="growth">+15% Growth</span>
+                    </div>
+                </div>
+                <div class="career-card" data-career="qa">
+                    <div class="career-icon">🧪</div>
+                    <h3>QA Engineer</h3>
+                    <p>Ensure software quality through testing and automation</p>
+                    <div class="career-meta">
+                        <span class="salary">$60K - $100K</span>
+                        <span class="growth">+12% Growth</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setup-actions">
+                <div></div> <!-- Empty div for spacing -->
+                <button class="next-button" id="step1Next" disabled>Next →</button>
+            </div>
+        </div>
+
+        <!-- Step 2: User Information -->
+        <div class="setup-step" id="step2">
+            <div class="step-header">
+                <h2>Tell Us About Yourself</h2>
+                <p>Help us personalize your learning experience</p>
+            </div>
+
+            <div class="user-info-form">
+                <div class="form-group">
+                    <label for="userName">Your Name</label>
+                    <input type="text" id="userName" placeholder="Enter your full name">
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">Email Address</label>
+                    <input type="email" id="userEmail" placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label for="userExperience">Current Experience Level</label>
+                    <select id="userExperience" class="filter-select">
+                        <option value="">Select your experience level</option>
+                        <option value="beginner">Beginner (0-1 years)</option>
+                        <option value="intermediate">Intermediate (1-3 years)</option>
+                        <option value="advanced">Advanced (3+ years)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="setup-actions">
+                <button class="back-button" id="step2Back">← Back</button>
+                <button class="next-button" id="step2Next" disabled>Next →</button>
+            </div>
+        </div>
+
+        <!-- Step 3: CV Upload -->
+        <div class="setup-step" id="step3">
+            <div class="step-header">
+                <h2>Upload Your CV/Resume</h2>
+                <p>We'll analyze your current skills to create a personalized roadmap</p>
+            </div>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-content">
+                    <div class="upload-icon">📄</div>
+                    <h3>Drag & Drop Your CV</h3>
+                    <p>Supported formats: PDF, DOC, DOCX, TXT (Max 5MB)</p>
+                    <button class="browse-button" onclick="document.getElementById('cvFile').click()">
+                        Browse Files
+                    </button>
+                    <input type="file" id="cvFile" accept=".pdf,.doc,.docx,.txt" style="display: none;">
+                </div>
+            </div>
+
+            <div class="file-info" id="fileInfo">
+                <span class="file-name" id="fileName"></span>
+                <button class="remove-file" id="removeFile">×</button>
+            </div>
+
+            <div class="setup-actions">
+                <button class="back-button" id="step3Back">← Back</button>
+                <button class="next-button" id="step3Next" disabled>Generate Roadmap →</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Loading & Generating Roadmap -->
+        <div class="setup-step" id="step4">
+            <div class="loading-step">
+                <div class="loading-spinner"></div>
+                <h3>Generating Your AI-Powered Career Roadmap</h3>
+                <p>Analyzing your skills and creating a personalized learning path...</p>
+                <p>This may take a few moments</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let appState = {
+            selectedCareer: null,
+            userName: null,
+            userEmail: null,
+            userExperience: null,
+            cvFile: null
+        };
+
+        // DOM elements
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        const step4 = document.getElementById('step4');
+        
+        const step1Next = document.getElementById('step1Next');
+        const step2Back = document.getElementById('step2Back');
+        const step2Next = document.getElementById('step2Next');
+        const step3Back = document.getElementById('step3Back');
+        const step3Next = document.getElementById('step3Next');
+        
+        const step1Dot = document.getElementById('step1Dot');
+        const step2Dot = document.getElementById('step2Dot');
+        const step3Dot = document.getElementById('step3Dot');
+        const step4Dot = document.getElementById('step4Dot');
+
+        // Career selection
+        document.querySelectorAll('.career-card').forEach(card => {
+            card.addEventListener('click', function() {
+                // Remove selected class from all cards
+                document.querySelectorAll('.career-card').forEach(c => {
+                    c.classList.remove('selected');
+                });
+                
+                // Add selected class to clicked card
+                this.classList.add('selected');
+                
+                // Store selected career
+                appState.selectedCareer = this.getAttribute('data-career');
+                
+                // Enable next button
+                step1Next.disabled = false;
+            });
+        });
+
+        // Step navigation
+        step1Next.addEventListener('click', function() {
+            step1.classList.remove('active');
+            step2.classList.add('active');
             
-            <div class="job-categories">
-                <h3>Choose Your Path</h3>
-                <div class="category-grid">
-                    <div class="category-card" data-category="fullstack">
-                        <div class="category-icon">💻</div>
-                        <h4>Full-Stack Development</h4>
-                        <p>Frontend + Backend + Databases</p>
-                    </div>
-                    <div class="category-card" data-category="datascience">
-                        <div class="category-icon">📊</div>
-                        <h4>Data Science</h4>
-                        <p>Python, ML, Analytics</p>
-                    </div>
-                    <div class="category-card" data-category="machinelearning">
-                        <div class="category-icon">🤖</div>
-                        <h4>Machine Learning</h4>
-                        <p>AI, Deep Learning, NLP</p>
-                    </div>
-                    <div class="category-card" data-category="mobile">
-                        <div class="category-icon">📱</div>
-                        <h4>Mobile Development</h4>
-                        <p>iOS, Android, Cross-platform</p>
-                    </div>
-                    <div class="category-card" data-category="devops">
-                        <div class="category-icon">⚙️</div>
-                        <h4>DevOps</h4>
-                        <p>Cloud, CI/CD, Infrastructure</p>
-                    </div>
-                    <div class="category-card" data-category="cybersecurity">
-                        <div class="category-icon">🔒</div>
-                        <h4>Cyber Security</h4>
-                        <p>Security, Networking, Ethical Hacking</p>
-                    </div>
-                </div>
-            </div>
+            step1Dot.classList.remove('active');
+            step1Dot.classList.add('completed');
+            step2Dot.classList.add('active');
+        });
 
-            <button class="cta-button" onclick="startJourney()">
-                Start Your Journey →
-            </button>
-        </div>
-    </section>
+        step2Back.addEventListener('click', function() {
+            step2.classList.remove('active');
+            step1.classList.add('active');
+            
+            step2Dot.classList.remove('active');
+            step1Dot.classList.add('active');
+        });
 
-    <section class="features">
-        <div class="container">
-            <h2>How It Works</h2>
-            <div class="features-grid">
-                <div class="feature">
-                    <div class="feature-icon">📄</div>
-                    <h3>Upload Your CV</h3>
-                    <p>AI analyzes your current skills and experience</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">🔍</div>
-                    <h3>Skill Gap Analysis</h3>
-                    <p>Compare your skills with job market requirements</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">🗺️</div>
-                    <h3>Personalized Roadmap</h3>
-                    <p>Get a step-by-step learning path to your goals</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Job Matching</h3>
-                    <p>Find internships and jobs that match your profile</p>
-                </div>
-            </div>
-        </div>
-    </section>
+        step2Next.addEventListener('click', function() {
+            // Validate form
+            const userName = document.getElementById('userName').value;
+            const userEmail = document.getElementById('userEmail').value;
+            const userExperience = document.getElementById('userExperience').value;
+            
+            if (!userName || !userEmail || !userExperience) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            appState.userName = userName;
+            appState.userEmail = userEmail;
+            appState.userExperience = userExperience;
+            
+            step2.classList.remove('active');
+            step3.classList.add('active');
+            
+            step2Dot.classList.remove('active');
+            step2Dot.classList.add('completed');
+            step3Dot.classList.add('active');
+        });
 
-    <footer>
-        <div class="container">
-            <p>&copy; 2024 Solo Leveling - AI Career Path Builder. Helping students bridge the skills gap.</p>
-        </div>
-    </footer>
+        step3Back.addEventListener('click', function() {
+            step3.classList.remove('active');
+            step2.classList.add('active');
+            
+            step3Dot.classList.remove('active');
+            step2Dot.classList.add('active');
+        });
 
-    <script src="js/main.js"></script>
+        step3Next.addEventListener('click', function() {
+            if (!appState.cvFile) {
+                alert('Please upload your CV');
+                return;
+            }
+            
+            step3.classList.remove('active');
+            step4.classList.add('active');
+            
+            step3Dot.classList.remove('active');
+            step3Dot.classList.add('completed');
+            step4Dot.classList.add('active');
+            
+            // Generate roadmap
+            generateRoadmap();
+        });
+
+        // Form validation for step 2
+        document.getElementById('userName').addEventListener('input', validateStep2);
+        document.getElementById('userEmail').addEventListener('input', validateStep2);
+        document.getElementById('userExperience').addEventListener('change', validateStep2);
+
+        function validateStep2() {
+            const userName = document.getElementById('userName').value;
+            const userEmail = document.getElementById('userEmail').value;
+            const userExperience = document.getElementById('userExperience').value;
+            
+            step2Next.disabled = !(userName && userEmail && userExperience);
+        }
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const cvFile = document.getElementById('cvFile');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const removeFile = document.getElementById('removeFile');
+
+        uploadArea.addEventListener('click', function() {
+            cvFile.click();
+        });
+
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', function() {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            
+            if (e.dataTransfer.files.length > 0) {
+                handleFileSelection(e.dataTransfer.files[0]);
+            }
+        });
+
+        cvFile.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                handleFileSelection(e.target.files[0]);
+            }
+        });
+
+        removeFile.addEventListener('click', function() {
+            appState.cvFile = null;
+            cvFile.value = '';
+            fileInfo.classList.remove('active');
+            step3Next.disabled = true;
+        });
+
+        function handleFileSelection(file) {
+            // Validate file type
+            const validTypes = ['application/pdf', 'application/msword', 
+                               'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                               'text/plain'];
+            
+            if (!validTypes.includes(file.type) && !file.name.match(/\.(pdf|doc|docx|txt)$/i)) {
+                alert('Please upload a PDF, Word, or text file');
+                return;
+            }
+            
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                return;
+            }
+            
+            appState.cvFile = file;
+            fileName.textContent = file.name;
+            fileInfo.classList.add('active');
+            step3Next.disabled = false;
+        }
+
+        // Generate roadmap function
+        function generateRoadmap() {
+            // Save user data to localStorage
+            localStorage.setItem('userProfile', JSON.stringify({
+                career: appState.selectedCareer,
+                name: appState.userName,
+                email: appState.userEmail,
+                experience: appState.userExperience,
+                setupComplete: true
+            }));
+            
+            // Simulate API call to generate roadmap
+            setTimeout(function() {
+                // Redirect to roadmap page
+                window.location.href = 'roadmap.html';
+            }, 3000);
+        }
+
+        // Check if user has already completed setup
+        document.addEventListener('DOMContentLoaded', function() {
+            const userProfile = localStorage.getItem('userProfile');
+            if (userProfile) {
+                const profile = JSON.parse(userProfile);
+                if (profile.setupComplete) {
+                    // User has completed setup, redirect to dashboard
+                    window.location.href = 'dashboard.html';
+                }
+            }
+        });
+    </script>
 </body>
 </html>

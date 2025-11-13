@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Solo Leveling</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .profile-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
+
+        .profile-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .profile-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .info-group input, .info-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+
+        .current-career {
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+        }
+
+        .career-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .update-button {
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .reset-button {
+            background: transparent;
+            border: 1px solid var(--text-light);
+            color: var(--text-light);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <h2>SOLO LEVELING</h2>
+                <span>AI Career Path Builder</span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="roadmap.html">Roadmap</a>
+                <a href="jobs.html">Jobs</a>
+                <a href="profile.html" class="active">Profile</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="profile-container">
+        <div class="profile-card">
+            <div class="profile-header">
+                <h1>Your Profile</h1>
+                <p>Update your information and career goals</p>
+            </div>
+
+            <div class="current-career">
+                <div class="career-badge" id="currentCareerBadge">Full-Stack Developer</div>
+                <h3>Current Career Path</h3>
+                <p id="currentCareerDesc">Building complete web applications with frontend and backend technologies</p>
+            </div>
+
+            <div class="profile-info">
+                <div class="info-group">
+                    <label for="profileName">Full Name</label>
+                    <input type="text" id="profileName" value="John Doe">
+                </div>
+                <div class="info-group">
+                    <label for="profileEmail">Email Address</label>
+                    <input type="email" id="profileEmail" value="john@example.com">
+                </div>
+                <div class="info-group">
+                    <label for="profileExperience">Experience Level</label>
+                    <select id="profileExperience">
+                        <option value="beginner">Beginner (0-1 years)</option>
+                        <option value="intermediate" selected>Intermediate (1-3 years)</option>
+                        <option value="advanced">Advanced (3+ years)</option>
+                    </select>
+                </div>
+                <div class="info-group">
+                    <label for="profileCareer">Target Career</label>
+                    <select id="profileCareer">
+                        <option value="fullstack" selected>Full-Stack Developer</option>
+                        <option value="frontend">Frontend Developer</option>
+                        <option value="backend">Backend Developer</option>
+                        <option value="datascience">Data Scientist</option>
+                        <option value="machinelearning">Machine Learning Engineer</option>
+                        <option value="mobile">Mobile Developer</option>
+                        <option value="devops">DevOps Engineer</option>
+                        <option value="cybersecurity">Cyber Security Analyst</option>
+                        <option value="uxui">UX/UI Designer</option>
+                        <option value="qa">QA Engineer</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="profile-actions">
+                <button class="reset-button" onclick="resetProfile()">Reset to Default</button>
+                <button class="update-button" onclick="updateProfile()">Update Profile</button>
+            </div>
+        </div>
+
+        <div class="profile-card">
+            <h2>Update Your CV</h2>
+            <p>Upload a new CV to refresh your skill analysis and roadmap</p>
+            <!-- You can reuse the upload component from index.html here -->
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="update-button" onclick="window.location.href='index.html'">
+                    Re-run Career Analysis
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load user profile data
+        document.addEventListener('DOMContentLoaded', function() {
+            const userProfile = localStorage.getItem('userProfile');
+            if (userProfile) {
+                const profile = JSON.parse(userProfile);
+                
+                // Update form fields
+                document.getElementById('profileName').value = profile.name || '';
+                document.getElementById('profileEmail').value = profile.email || '';
+                document.getElementById('profileExperience').value = profile.experience || 'beginner';
+                document.getElementById('profileCareer').value = profile.career || 'fullstack';
+                
+                // Update career badge and description
+                updateCareerDisplay(profile.career);
+            }
+        });
+
+        // Update career display when selection changes
+        document.getElementById('profileCareer').addEventListener('change', function() {
+            updateCareerDisplay(this.value);
+        });
+
+        function updateCareerDisplay(career) {
+            const careerData = {
+                'fullstack': { name: 'Full-Stack Developer', desc: 'Build complete web applications with frontend and backend technologies' },
+                'frontend': { name: 'Frontend Developer', desc: 'Create engaging user interfaces and experiences for web applications' },
+                'backend': { name: 'Backend Developer', desc: 'Develop server-side logic, databases, and APIs for web applications' },
+                'datascience': { name: 'Data Scientist', desc: 'Extract insights from data using statistical analysis and machine learning' },
+                'machinelearning': { name: 'Machine Learning Engineer', desc: 'Design and implement AI models and machine learning systems' },
+                'mobile': { name: 'Mobile Developer', desc: 'Create applications for iOS and Android platforms' },
+                'devops': { name: 'DevOps Engineer', desc: 'Automate and optimize development, testing, and deployment processes' },
+                'cybersecurity': { name: 'Cyber Security Analyst', desc: 'Protect systems and networks from cyber threats and attacks' },
+                'uxui': { name: 'UX/UI Designer', desc: 'Design intuitive and visually appealing user interfaces and experiences' },
+                'qa': { name: 'QA Engineer', desc: 'Ensure software quality through testing and automation' }
+            };
+
+            const careerInfo = careerData[career] || careerData['fullstack'];
+            document.getElementById('currentCareerBadge').textContent = careerInfo.name;
+            document.getElementById('currentCareerDesc').textContent = careerInfo.desc;
+        }
+
+        function updateProfile() {
+            const updatedProfile = {
+                name: document.getElementById('profileName').value,
+                email: document.getElementById('profileEmail').value,
+                experience: document.getElementById('profileExperience').value,
+                career: document.getElementById('profileCareer').value,
+                setupComplete: true
+            };
+
+            localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+            alert('Profile updated successfully!');
+            
+            // Redirect to roadmap to refresh with new career
+            window.location.href = 'roadmap.html';
+        }
+
+        function resetProfile() {
+            if (confirm('Are you sure you want to reset your profile? This will clear all your data.')) {
+                localStorage.removeItem('userProfile');
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>

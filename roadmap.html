@@ -6,6 +6,24 @@
     <title>Learning Roadmap - Solo Leveling</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
+        /* ===== VARIABLES ===== */
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --accent-color: #4cc9f0;
+            --success-color: #4bb543;
+            --warning-color: #ffcc00;
+            --danger-color: #dc3545;
+            --white: #ffffff;
+            --light-bg: #f8f9fa;
+            --text-dark: #212529;
+            --text-light: #6c757d;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        /* ===== LAYOUT ===== */
         .roadmap-container {
             max-width: 1000px;
             margin: 2rem auto;
@@ -22,6 +40,7 @@
             padding-left: 2rem;
         }
 
+        /* ===== TIMELINE ===== */
         .roadmap-timeline::before {
             content: '';
             position: absolute;
@@ -33,6 +52,7 @@
             border-radius: 2px;
         }
 
+        /* ===== PHASE STYLES ===== */
         .roadmap-phase {
             margin-bottom: 3rem;
             position: relative;
@@ -62,7 +82,7 @@
 
         .phase-title {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 0.5rem;
         }
@@ -86,6 +106,7 @@
             margin-bottom: 1rem;
         }
 
+        /* ===== MODULES GRID ===== */
         .modules-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -97,7 +118,7 @@
             padding: 1.5rem;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
-            border-left: 4px solid var(--success);
+            border-left: 4px solid var(--success-color);
             transition: var(--transition);
         }
 
@@ -124,7 +145,7 @@
         }
 
         .module-difficulty {
-            background: var(--bg-light);
+            background: var(--light-bg);
             padding: 0.25rem 0.5rem;
             border-radius: 4px;
             font-size: 0.8rem;
@@ -137,6 +158,7 @@
             font-size: 0.9rem;
         }
 
+        /* ===== SKILLS ===== */
         .module-skills {
             display: flex;
             flex-wrap: wrap;
@@ -152,6 +174,7 @@
             font-size: 0.8rem;
         }
 
+        /* ===== MODULE ACTIONS ===== */
         .module-actions {
             display: flex;
             justify-content: space-between;
@@ -165,14 +188,14 @@
         .progress-bar {
             width: 100%;
             height: 6px;
-            background: var(--bg-light);
+            background: var(--light-bg);
             border-radius: 3px;
             overflow: hidden;
         }
 
         .progress-fill {
             height: 100%;
-            background: var(--success);
+            background: var(--success-color);
             border-radius: 3px;
             transition: width 0.3s ease;
         }
@@ -197,6 +220,7 @@
             cursor: not-allowed;
         }
 
+        /* ===== STATS ===== */
         .roadmap-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -223,9 +247,371 @@
             color: var(--text-light);
             font-size: 0.9rem;
         }
+
+        /* ===== AI-SPECIFIC STYLES ===== */
+        .ai-phase {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .ai-phase-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .phase-meta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .phase-badge {
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .focus-areas {
+            margin: 1rem 0;
+        }
+
+        .focus-tag {
+            background: var(--light-bg);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            margin: 0 0.5rem 0.5rem 0;
+            display: inline-block;
+        }
+
+        .learning-objectives {
+            margin: 1.5rem 0;
+        }
+
+        .learning-objectives h4 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .ai-modules-grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        }
+
+        .ai-module-card {
+            background: var(--light-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .coding-module {
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .module-header {
+            margin-bottom: 1rem;
+        }
+
+        .module-meta {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .module-duration, .module-difficulty {
+            background: var(--white);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+
+        .coding-badge {
+            background: var(--accent-color);
+            color: var(--white);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .module-resources {
+            margin: 1.5rem 0;
+        }
+
+        .resources-list {
+            display: grid;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .resource-item {
+            padding: 0.75rem;
+            background: var(--white);
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .resource-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .resource-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .resource-link:hover {
+            text-decoration: underline;
+        }
+
+        .resource-type {
+            background: var(--light-bg);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .resource-description {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        .module-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .ai-start-button {
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .ai-start-button:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+        }
+
+        .coding-start {
+            background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        .career-guidance-section {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .ai-guidance-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .guidance-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .guidance-section h4 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        /* ===== LOADING AND ERROR STATES ===== */
+        .ai-loading-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--white);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin: 2rem 0;
+        }
+
+        .ai-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 2rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+            text-align: left;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .loading-step {
+            padding: 0.5rem;
+            border-radius: 6px;
+            background: var(--light-bg);
+            transition: all 0.3s ease;
+        }
+
+        .loading-step.active {
+            background: var(--primary-color);
+            color: var(--white);
+            font-weight: bold;
+        }
+
+        .loading-note {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: 1rem;
+        }
+
+        .ai-error-state, .ai-empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: var(--white);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin: 2rem 0;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .retry-button, .secondary-button, .cta-button {
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .secondary-button {
+            background: var(--light-bg);
+            color: var(--text-light);
+        }
+
+        .secondary-button:hover {
+            background: #cbd5e0;
+        }
+
+        /* ===== MODAL STYLES ===== */
+        .ai-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .ai-modal-content {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            .roadmap-timeline {
+                padding-left: 1.5rem;
+            }
+            
+            .phase-header::before {
+                left: -1.75rem;
+            }
+            
+            .ai-modules-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .module-actions {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .error-actions {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- ===== NAVIGATION ===== -->
     <nav class="navbar">
         <div class="nav-container">
             <div class="logo">
@@ -234,79 +620,54 @@
             </div>
             <div class="nav-links">
                 <a href="index.html">Home</a>
-                <a href="upload.html">Get Started</a>
                 <a href="dashboard.html">Dashboard</a>
                 <a href="roadmap.html" class="active">Roadmap</a>
                 <a href="jobs.html">Jobs</a>
+                <a href="profile.html">Profile</a>
             </div>
         </div>
     </nav>
-    
 
+    <!-- ===== MAIN CONTENT ===== -->
     <div class="roadmap-container">
+        <!-- Header Section -->
         <div class="roadmap-header">
-            <h1>Your Learning Roadmap</h1>
-            <p>Personalized path to become a <strong id="roadmapTargetRole">Full-Stack Developer</strong></p>
+            <h1>Your Learning Roadmap to <span id="targetCareerName"></span></h1>
+            <p id="roadmapDescription">AI-generated personalized learning path</p>
         </div>
 
+        <!-- Statistics Section -->
         <div class="roadmap-stats">
             <div class="stat-card">
-                <div class="stat-number" id="totalModules">12</div>
-                <div class="stat-label">Total Modules</div>
+                <div class="stat-number" id="totalModules">0</div>
+                <div class="stat-label">Learning Modules</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="completedModules">3</div>
-                <div class="stat-label">Completed</div>
+                <div class="stat-number" id="totalWeeks">0</div>
+                <div class="stat-label">Weeks Estimated</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="estimatedTime">8 weeks</div>
-                <div class="stat-label">Estimated Completion</div>
+                <div class="stat-number" id="skillsToLearn">0</div>
+                <div class="stat-label">Skills to Master</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="successRate">92%</div>
-                <div class="stat-label">Success Rate</div>
+                <div class="stat-number" id="readinessScore">0%</div>
+                <div class="stat-label">Career Readiness</div>
             </div>
         </div>
-        <!-- Updated roadmap.html to use AI-generated learning path -->
-<!-- Add this to your existing roadmap.html -->
 
-<div class="roadmap-container">
-    <div class="roadmap-header">
-        <h1>Your Learning Roadmap to <span id="targetCareerName"></span></h1>
-        <p id="roadmapDescription">AI-generated personalized learning path</p>
-    </div>
-
-    <div class="roadmap-stats">
-        <div class="stat-card">
-            <div class="stat-number" id="totalModules">0</div>
-            <div class="stat-label">Learning Modules</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" id="totalWeeks">0</div>
-            <div class="stat-label">Weeks Estimated</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" id="skillsToLearn">0</div>
-            <div class="stat-label">Skills to Master</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" id="readinessScore">0%</div>
-            <div class="stat-label">Career Readiness</div>
-        </div>
-    </div>
-
-    <div class="roadmap-timeline" id="roadmapTimeline">
-        <!-- AI-generated modules will be loaded here -->
-    </div>
-</div>
-
-<script src="js/roadmap.js"></script>
-
+        <!-- AI-Generated Roadmap Content -->
         <div class="roadmap-timeline" id="roadmapTimeline">
-            <!-- Roadmap will be populated by JavaScript -->
+            <!-- AI-generated modules will be loaded here by roadmap.js -->
+        </div>
+
+        <!-- Career Guidance Section -->
+        <div id="careerGuidance" class="career-guidance-section">
+            <!-- AI career guidance will be loaded here -->
         </div>
     </div>
 
+    <!-- ===== JAVASCRIPT ===== -->
     <script src="js/roadmap.js"></script>
 </body>
 </html>

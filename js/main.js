@@ -1,14 +1,19 @@
+// main.js - UPDATED FOR NEW NAVIGATION FLOW
+console.log('🚀 Solo Leveling App loaded');
+
 // Global state
 let appState = {
     currentUser: null,
     selectedCategory: null,
     userSkills: [],
     targetRole: null,
-    learningRoadmap: null
+    learningRoadmap: null,
+    userProfile: null
 };
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM ready');
     initializeApp();
 });
 
@@ -19,8 +24,23 @@ function initializeApp() {
         appState = { ...appState, ...JSON.parse(savedState) };
     }
 
-    // Initialize category selection
-    initializeCategorySelection();
+    // Check for user profile
+    const userProfile = localStorage.getItem('userProfile');
+    if (userProfile) {
+        appState.userProfile = JSON.parse(userProfile);
+        console.log('👤 User profile loaded:', appState.userProfile);
+        
+        // If user has completed setup, redirect to dashboard
+        if (appState.userProfile.setupComplete && window.location.pathname.endsWith('index.html')) {
+            console.log('✅ User setup complete, redirecting to dashboard');
+            window.location.href = 'dashboard.html';
+        }
+    }
+
+    // Initialize any page-specific functionality
+    if (document.querySelector('.category-grid')) {
+        initializeCategorySelection();
+    }
 }
 
 function initializeCategorySelection() {
@@ -42,13 +62,8 @@ function initializeCategorySelection() {
 }
 
 function startJourney() {
-    if (!appState.selectedCategory) {
-        alert('Please select a job category to continue');
-        return;
-    }
-    
-    // Redirect to upload page
-    window.location.href = 'upload.html';
+    // Redirect to the new onboarding flow
+    window.location.href = 'index.html';
 }
 
 function saveState() {
@@ -143,3 +158,10 @@ async function apiCall(endpoint, method = 'GET', data = null) {
         throw error;
     }
 }
+
+// Navigation helper function
+function navigateTo(page) {
+    window.location.href = page;
+}
+
+console.log('✅ Solo Leveling App ready');

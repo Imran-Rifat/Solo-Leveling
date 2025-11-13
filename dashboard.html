@@ -6,6 +6,171 @@
     <title>Skills Dashboard - Solo Leveling</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .edit-target {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .edit-target:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .skills-comparison {
+            grid-column: 1 / -1;
+        }
+
+        .chart-container {
+            height: 400px;
+            position: relative;
+        }
+
+        .skill-categories {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .category h3 {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .skill-tag {
+            background: var(--bg-light);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .skill-tag.mastered {
+            background: #c6f6d5;
+            border-color: #48bb78;
+            color: #22543d;
+        }
+
+        .skill-tag.learning {
+            background: #fef5e7;
+            border-color: #ed8936;
+            color: #744210;
+        }
+
+        .skill-tag.missing {
+            background: #fed7d7;
+            border-color: #f56565;
+            color: #742a2a;
+        }
+
+        .progress-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: var(--border-radius);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .progress-chart {
+            height: 200px;
+        }
+
+        .recommendation-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .recommendation {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .rec-icon {
+            font-size: 1.5rem;
+        }
+
+        .rec-content h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-dark);
+        }
+
+        .rec-content p {
+            margin: 0;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .progress-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -14,12 +179,12 @@
                 <h2>SOLO LEVELING</h2>
                 <span>AI Career Path Builder</span>
             </div>
-            <div class="nav-links">
+             <div class="nav-links">
                 <a href="index.html">Home</a>
-                <a href="upload.html">Get Started</a>
-                <a href="dashboard.html" class="active">Dashboard</a>
+                <a href="dashboard.html">Dashboard</a>
                 <a href="roadmap.html">Roadmap</a>
                 <a href="jobs.html">Jobs</a>
+                <a href="profile.html">Profile</a>
             </div>
         </div>
     </nav>
@@ -28,8 +193,8 @@
         <div class="dashboard-header">
             <h1>Skills Dashboard</h1>
             <div class="user-info">
-                <span>Target Role: <strong id="targetRole">Full-Stack Developer</strong></span>
-                <button class="edit-target" onclick="editTargetRole()">Edit</button>
+                <span>Target Role: <strong id="targetRole">Loading...</strong></span>
+                <button class="edit-target" onclick="editTargetRole()">Change Career</button>
             </div>
         </div>
 
@@ -47,19 +212,19 @@
                     <div class="category">
                         <h3>🟢 Mastered Skills</h3>
                         <div class="skills-list" id="masteredSkills">
-                            <!-- Mastered skills will be populated -->
+                            <div class="loading-skills">Loading your skills...</div>
                         </div>
                     </div>
                     <div class="category">
                         <h3>🟡 Learning Skills</h3>
                         <div class="skills-list" id="learningSkills">
-                            <!-- Learning skills will be populated -->
+                            <div class="loading-skills">Analyzing skill gaps...</div>
                         </div>
                     </div>
                     <div class="category">
                         <h3>🔴 Missing Skills</h3>
                         <div class="skills-list" id="missingSkills">
-                            <!-- Missing skills will be populated -->
+                            <div class="loading-skills">Identifying missing skills...</div>
                         </div>
                     </div>
                 </div>
@@ -88,28 +253,36 @@
 
             <div class="card recommendations">
                 <h2>AI Recommendations</h2>
-                <div class="recommendation-list">
+                <div class="recommendation-list" id="recommendationsList">
                     <div class="recommendation">
                         <div class="rec-icon">🎯</div>
                         <div class="rec-content">
-                            <h4>Focus on React.js</h4>
-                            <p>High demand in Full-Stack roles. Start with fundamentals.</p>
+                            <h4>Focus on Core Skills</h4>
+                            <p>Start with fundamental skills for your chosen career path</p>
                         </div>
                     </div>
                     <div class="recommendation">
                         <div class="rec-icon">⚡</div>
                         <div class="rec-content">
-                            <h4>Practice Database Design</h4>
-                            <p>Essential for backend development. Work on SQL queries.</p>
+                            <h4>Practice Regularly</h4>
+                            <p>Consistent practice is key to mastering new skills</p>
                         </div>
                     </div>
                     <div class="recommendation">
                         <div class="rec-icon">📈</div>
                         <div class="rec-content">
-                            <h4>Build Portfolio Projects</h4>
-                            <p>Create 2-3 full-stack applications to showcase skills.</p>
+                            <h4>Build Projects</h4>
+                            <p>Apply your skills by building real-world projects</p>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- AI Insights Section -->
+            <div class="card" id="aiInsightsCard" style="display: none;">
+                <h2>🤖 AI Career Coach</h2>
+                <div id="aiInsights">
+                    <!-- AI insights will be loaded here -->
                 </div>
             </div>
         </div>
