@@ -635,667 +635,689 @@
         </div>
     </div>
 
-    <script>
-        // Configuration
-        const API_BASE_URL = 'http://localhost:5000/api';
+    <script>// Configuration
+// const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://solo-leveling-backend-fybx.onrender.com/api';
+
+// Global state
+let currentLanguage = '';
+let currentChapterId = null;
+let currentQuestionLevel = 1;
+let currentQuestionData = null;
+let availableLanguages = [];
+let availableChapters = [];
+
+// Initialize application
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApplication();
+    setupEventListeners();
+});
+
+async function initializeApplication() {
+    try {
+        // Check API health
+        await checkAPIHealth();
         
-        // Global state
-        let currentLanguage = '';
-        let currentChapterId = null;
-        let currentQuestionLevel = 1;
-        let currentQuestionData = null;
-        let currentChapterContent = null;
-        let availableLanguages = [];
-        let availableChapters = [];
+        // Load available languages
+        await loadLanguages();
+        
+        // Load available chapters
+        await loadChapters();
+        
+        // Set initial language from URL or default to first available
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlLanguage = urlParams.get('language');
+        const urlChapter = urlParams.get('chapter');
+        
+        if (urlLanguage && availableLanguages.includes(urlLanguage)) {
+            currentLanguage = urlLanguage;
+        } else if (availableLanguages.length > 0) {
+            currentLanguage = availableLanguages[0];
+        }
+        
+        if (urlChapter) {
+            currentChapterId = parseInt(urlChapter);
+        } else if (availableChapters.length > 0) {
+            currentChapterId = availableChapters[0].id;
+        }
+        
+        // Update UI
+        updateLanguageUI();
+        updateChaptersUI();
+        
+        // Load initial content if we have a language and chapter
+        if (currentLanguage && currentChapterId) {
+            await loadConceptContent(currentChapterId);
+            await loadQuestion(currentChapterId, currentQuestionLevel);
+        }
+        
+    } catch (error) {
+        console.error('Error initializing application:', error);
+        showError('Failed to initialize application. Please check if the backend server is running.');
+    }
+}
 
-        // Initialize application
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeApplication();
-            setupEventListeners();
+function setupEventListeners() {
+    // Language selection
+    document.getElementById('language-select').addEventListener('change', function(e) {
+        currentLanguage = e.target.value;
+        updateLanguageUI();
+        if (currentChapterId) {
+            reloadCurrentChapter();
+        }
+    });
+
+    // Code editor actions
+    document.getElementById('reset-code').addEventListener('click', resetCodeEditor);
+    document.getElementById('fullscreen-toggle').addEventListener('click', toggleFullscreen);
+    
+    // Practice actions
+    document.getElementById('run-code').addEventListener('click', validateCode);
+    document.getElementById('show-solution').addEventListener('click', showSolution);
+    document.getElementById('show-hint').addEventListener('click', showHint);
+    document.getElementById('next-question').addEventListener('click', loadNextQuestion);
+}
+
+async function checkAPIHealth() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/health`);
+        if (!response.ok) throw new Error('API not healthy');
+        const data = await response.json();
+        console.log('API Health:', data);
+        return true;
+    } catch (error) {
+        throw new Error('Backend API is not accessible. Please make sure the server is running.');
+    }
+}
+
+async function loadLanguages() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/languages`);
+        if (!response.ok) throw new Error('Failed to load languages');
+        const data = await response.json();
+        availableLanguages = data.languages || [];
+        updateLanguagesDropdown();
+    } catch (error) {
+        console.error('Error loading languages:', error);
+        showError('Failed to load available languages.');
+    }
+}
+
+async function loadChapters() {
+    try {
+        const language = currentLanguage || 'python';
+        const response = await fetch(`${API_BASE_URL}/chapters?language=${language}`);
+        if (!response.ok) throw new Error('Failed to load chapters');
+        const data = await response.json();
+        availableChapters = data.chapters || [];
+    } catch (error) {
+        console.error('Error loading chapters:', error);
+        showError('Failed to load chapters.');
+    }
+}
+
+function updateLanguagesDropdown() {
+    const select = document.getElementById('language-select');
+    select.innerHTML = '';
+    
+    if (availableLanguages.length === 0) {
+        select.innerHTML = '<option value="">No languages available</option>';
+        return;
+    }
+    
+    availableLanguages.forEach(language => {
+        const option = document.createElement('option');
+        option.value = language;
+        option.textContent = language.charAt(0).toUpperCase() + language.slice(1);
+        select.appendChild(option);
+    });
+    
+    if (currentLanguage) {
+        select.value = currentLanguage;
+    }
+}
+
+function updateLanguageUI() {
+    document.getElementById('language-badge').textContent = currentLanguage ? 
+        currentLanguage.charAt(0).toUpperCase() + currentLanguage.slice(1) : 'Select Language';
+        
+    document.getElementById('platform-title').textContent = `AI DSA Learning - ${currentLanguage || 'Platform'}`;
+    
+    if (currentLanguage) {
+        document.getElementById('code-file-name').textContent = `solution.${getFileExtension(currentLanguage)}`;
+        resetCodeEditor();
+    }
+}
+
+function updateChaptersUI() {
+    const chapterList = document.getElementById('chapter-list');
+    
+    if (availableChapters.length === 0) {
+        chapterList.innerHTML = '<div class="chapter-card"><span>No chapters available</span></div>';
+        return;
+    }
+    
+    chapterList.innerHTML = '';
+    
+    availableChapters.forEach(chapter => {
+        const chapterCard = document.createElement('div');
+        chapterCard.className = `chapter-card ${chapter.id === currentChapterId ? 'active' : ''}`;
+        chapterCard.dataset.chapterId = chapter.id;
+        chapterCard.innerHTML = `
+            <i class="fas fa-${getChapterIcon(chapter.name)}"></i>
+            <span>${chapter.name}</span>
+        `;
+        
+        chapterCard.addEventListener('click', () => selectChapter(chapter.id));
+        chapterList.appendChild(chapterCard);
+    });
+}
+
+async function selectChapter(chapterId) {
+    currentChapterId = chapterId;
+    currentQuestionLevel = 1;
+    
+    // Update UI state
+    document.querySelectorAll('.chapter-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    document.querySelector(`[data-chapter-id="${chapterId}"]`).classList.add('active');
+    
+    // Load content
+    await loadConceptContent(chapterId);
+    await loadQuestion(chapterId, currentQuestionLevel);
+    
+    // Update URL
+    updateURL();
+}
+
+async function reloadCurrentChapter() {
+    if (currentChapterId) {
+        await loadChapters();
+        await loadConceptContent(currentChapterId);
+        await loadQuestion(currentChapterId, currentQuestionLevel);
+        updateChaptersUI();
+    }
+}
+
+// FIXED: This function now uses the correct /concept endpoint
+async function loadConceptContent(chapterId) {
+    try {
+        showLoading('concept');
+        
+        const response = await fetch(
+            `${API_BASE_URL}/chapters/${chapterId}/concept?language=${currentLanguage}`
+        );
+        
+        if (!response.ok) throw new Error('Failed to load concept content');
+        
+        const data = await response.json();
+        renderConcept(data.concept);
+        
+    } catch (error) {
+        console.error('Error loading concept content:', error);
+        showError('Failed to load concept content. Please try again.');
+        renderFallbackConcept();
+    }
+}
+
+function renderConcept(concept) {
+    if (!concept) {
+        document.getElementById('concept-title').textContent = 'Concept Not Available';
+        document.getElementById('concept-content').innerHTML = '<p>Concept content is not available for this chapter.</p>';
+        return;
+    }
+    
+    document.getElementById('concept-title').textContent = concept.title || 'Concept Overview';
+    document.getElementById('concept-difficulty').textContent = 'All Levels';
+    
+    let content = '';
+    
+    if (concept.overview) {
+        content += `<div class="language-info"><strong>Overview:</strong> ${concept.overview}</div>`;
+    }
+    
+    if (concept.theory_content) {
+        content += concept.theory_content;
+    } else {
+        content += '<p>Detailed theory content will be generated for this chapter.</p>';
+    }
+    
+    if (concept.learning_objectives && concept.learning_objectives.length > 0) {
+        content += `<h3>Learning Objectives</h3><ul>`;
+        concept.learning_objectives.forEach(obj => {
+            content += `<li>${obj}</li>`;
         });
-
-        async function initializeApplication() {
-            try {
-                // Check API health
-                await checkAPIHealth();
-                
-                // Load available languages
-                await loadLanguages();
-                
-                // Load available chapters
-                await loadChapters();
-                
-                // Set initial language from URL or default to first available
-                const urlParams = new URLSearchParams(window.location.search);
-                const urlLanguage = urlParams.get('language');
-                const urlChapter = urlParams.get('chapter');
-                
-                if (urlLanguage && availableLanguages.includes(urlLanguage)) {
-                    currentLanguage = urlLanguage;
-                } else if (availableLanguages.length > 0) {
-                    currentLanguage = availableLanguages[0];
-                }
-                
-                if (urlChapter) {
-                    currentChapterId = parseInt(urlChapter);
-                } else if (availableChapters.length > 0) {
-                    currentChapterId = availableChapters[0].id;
-                }
-                
-                // Update UI
-                updateLanguageUI();
-                updateChaptersUI();
-                
-                // Load initial content if we have a language and chapter
-                if (currentLanguage && currentChapterId) {
-                    await loadChapterContent(currentChapterId);
-                    await loadQuestion(currentChapterId, currentQuestionLevel);
-                }
-                
-            } catch (error) {
-                console.error('Error initializing application:', error);
-                showError('Failed to initialize application. Please check if the backend server is running.');
-            }
-        }
-
-        function setupEventListeners() {
-            // Language selection
-            document.getElementById('language-select').addEventListener('change', function(e) {
-                currentLanguage = e.target.value;
-                updateLanguageUI();
-                if (currentChapterId) {
-                    reloadCurrentChapter();
-                }
-            });
-
-            // Code editor actions
-            document.getElementById('reset-code').addEventListener('click', resetCodeEditor);
-            document.getElementById('fullscreen-toggle').addEventListener('click', toggleFullscreen);
-            
-            // Practice actions
-            document.getElementById('run-code').addEventListener('click', validateCode);
-            document.getElementById('show-solution').addEventListener('click', showSolution);
-            document.getElementById('show-hint').addEventListener('click', showHint);
-            document.getElementById('next-question').addEventListener('click', loadNextQuestion);
-        }
-
-        async function checkAPIHealth() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/health`);
-                if (!response.ok) throw new Error('API not healthy');
-                const data = await response.json();
-                console.log('API Health:', data);
-                return true;
-            } catch (error) {
-                throw new Error('Backend API is not accessible. Please make sure the server is running.');
-            }
-        }
-
-        async function loadLanguages() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/languages`);
-                if (!response.ok) throw new Error('Failed to load languages');
-                const data = await response.json();
-                availableLanguages = data.languages || [];
-                updateLanguagesDropdown();
-            } catch (error) {
-                console.error('Error loading languages:', error);
-                showError('Failed to load available languages.');
-            }
-        }
-
-        async function loadChapters() {
-            try {
-                const language = currentLanguage || 'python';
-                const response = await fetch(`${API_BASE_URL}/chapters?language=${language}`);
-                if (!response.ok) throw new Error('Failed to load chapters');
-                const data = await response.json();
-                availableChapters = data.chapters || [];
-            } catch (error) {
-                console.error('Error loading chapters:', error);
-                showError('Failed to load chapters.');
-            }
-        }
-
-        function updateLanguagesDropdown() {
-            const select = document.getElementById('language-select');
-            select.innerHTML = '';
-            
-            if (availableLanguages.length === 0) {
-                select.innerHTML = '<option value="">No languages available</option>';
-                return;
-            }
-            
-            availableLanguages.forEach(language => {
-                const option = document.createElement('option');
-                option.value = language;
-                option.textContent = language.charAt(0).toUpperCase() + language.slice(1);
-                select.appendChild(option);
-            });
-            
-            if (currentLanguage) {
-                select.value = currentLanguage;
-            }
-        }
-
-        function updateLanguageUI() {
-            document.getElementById('language-badge').textContent = currentLanguage ? 
-                currentLanguage.charAt(0).toUpperCase() + currentLanguage.slice(1) : 'Select Language';
-                
-            document.getElementById('platform-title').textContent = `AI DSA Learning - ${currentLanguage || 'Platform'}`;
-            
-            if (currentLanguage) {
-                document.getElementById('code-file-name').textContent = `solution.${getFileExtension(currentLanguage)}`;
-                resetCodeEditor();
-            }
-        }
-
-        function updateChaptersUI() {
-            const chapterList = document.getElementById('chapter-list');
-            
-            if (availableChapters.length === 0) {
-                chapterList.innerHTML = '<div class="chapter-card"><span>No chapters available</span></div>';
-                return;
-            }
-            
-            chapterList.innerHTML = '';
-            
-            availableChapters.forEach(chapter => {
-                const chapterCard = document.createElement('div');
-                chapterCard.className = `chapter-card ${chapter.id === currentChapterId ? 'active' : ''}`;
-                chapterCard.dataset.chapterId = chapter.id;
-                chapterCard.innerHTML = `
-                    <i class="fas fa-${getChapterIcon(chapter.name)}"></i>
-                    <span>${chapter.name}</span>
-                `;
-                
-                chapterCard.addEventListener('click', () => selectChapter(chapter.id));
-                chapterList.appendChild(chapterCard);
-            });
-        }
-
-        async function selectChapter(chapterId) {
-            currentChapterId = chapterId;
-            currentQuestionLevel = 1;
-            
-            // Update UI state
-            document.querySelectorAll('.chapter-card').forEach(card => {
-                card.classList.remove('active');
-            });
-            document.querySelector(`[data-chapter-id="${chapterId}"]`).classList.add('active');
-            
-            // Load content
-            await loadChapterContent(chapterId);
-            await loadQuestion(chapterId, currentQuestionLevel);
-            
-            // Update URL
-            updateURL();
-        }
-
-        async function reloadCurrentChapter() {
-            if (currentChapterId) {
-                await loadChapters();
-                await loadChapterContent(currentChapterId);
-                await loadQuestion(currentChapterId, currentQuestionLevel);
-                updateChaptersUI();
-            }
-        }
-
-        async function loadChapterContent(chapterId) {
-            try {
-                showLoading('concept');
-                
-                const response = await fetch(
-                    `${API_BASE_URL}/chapters/${chapterId}/content?language=${currentLanguage}`
-                );
-                
-                if (!response.ok) throw new Error('Failed to load chapter content');
-                
-                const data = await response.json();
-                currentChapterContent = data.content;
-                
-                renderConcept(currentChapterContent.concept);
-                
-            } catch (error) {
-                console.error('Error loading chapter content:', error);
-                showError('Failed to load chapter content. Please try again.');
-                renderFallbackConcept();
-            }
-        }
-
-        function renderConcept(concept) {
-            if (!concept) {
-                document.getElementById('concept-title').textContent = 'Concept Not Available';
-                document.getElementById('concept-content').innerHTML = '<p>Concept content is not available for this chapter.</p>';
-                return;
-            }
-            
-            document.getElementById('concept-title').textContent = concept.title || 'Concept Overview';
-            document.getElementById('concept-difficulty').textContent = concept.difficulty || 'All Levels';
-            
-            let content = '';
-            
-            if (concept.overview) {
-                content += `<div class="language-info"><strong>Overview:</strong> ${concept.overview}</div>`;
-            }
-            
-            if (concept.theory_content) {
-                content += concept.theory_content;
-            } else {
-                content += '<p>Detailed theory content will be generated for this chapter.</p>';
-            }
-            
-            if (concept.learning_objectives && concept.learning_objectives.length > 0) {
-                content += `<h3>Learning Objectives</h3><ul>`;
-                concept.learning_objectives.forEach(obj => {
-                    content += `<li>${obj}</li>`;
-                });
-                content += `</ul>`;
-            }
-            
-            if (concept.code_examples && concept.code_examples.length > 0) {
-                content += `<h3>Code Examples</h3>`;
-                concept.code_examples.forEach((example, index) => {
-                    content += `
-                        <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 4px;">
-                            <strong>Example ${index + 1}:</strong>
-                            <pre style="background: #1e1e1e; color: #d4d4d4; padding: 10px; border-radius: 4px; margin: 10px 0;">${example.code}</pre>
-                            <p><em>${example.explanation}</em></p>
-                        </div>
-                    `;
-                });
-            }
-            
-            document.getElementById('concept-content').innerHTML = content;
-        }
-
-        function renderFallbackConcept() {
-            document.getElementById('concept-title').textContent = 'Content Loading Failed';
-            document.getElementById('concept-content').innerHTML = `
-                <div class="error-message">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Unable to load concept content. Please try selecting a different chapter or check your connection.
+        content += `</ul>`;
+    }
+    
+    if (concept.code_examples && concept.code_examples.length > 0) {
+        content += `<h3>Code Examples</h3>`;
+        concept.code_examples.forEach((example, index) => {
+            content += `
+                <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 4px;">
+                    <strong>Example ${index + 1}:</strong>
+                    <pre style="background: #1e1e1e; color: #d4d4d4; padding: 10px; border-radius: 4px; margin: 10px 0;">${example.code}</pre>
+                    <p><em>${example.explanation}</em></p>
                 </div>
             `;
-        }
+        });
+    }
+    
+    if (concept.key_takeaways && concept.key_takeaways.length > 0) {
+        content += `<h3>Key Takeaways</h3><ul>`;
+        concept.key_takeaways.forEach(takeaway => {
+            content += `<li>${takeaway}</li>`;
+        });
+        content += `</ul>`;
+    }
+    
+    document.getElementById('concept-content').innerHTML = content;
+}
 
-        async function loadQuestion(chapterId, level) {
-            try {
-                showLoading('question');
-                
-                const response = await fetch(
-                    `${API_BASE_URL}/chapters/${chapterId}/questions/${level}?language=${currentLanguage}`
-                );
-                
-                if (!response.ok) throw new Error('Failed to load question');
-                
-                const data = await response.json();
-                currentQuestionData = data.question;
-                renderQuestion(data.question);
-                updateLevelIndicator(level);
-                
-            } catch (error) {
-                console.error('Error loading question:', error);
-                showError('Failed to load question. Please try again.');
-                renderFallbackQuestion();
-            }
-        }
+function renderFallbackConcept() {
+    document.getElementById('concept-title').textContent = 'Content Loading Failed';
+    document.getElementById('concept-content').innerHTML = `
+        <div class="error-message">
+            <i class="fas fa-exclamation-triangle"></i>
+            Unable to load concept content. Please try selecting a different chapter or check your connection.
+        </div>
+    `;
+}
 
-        function renderQuestion(question) {
-            if (!question) {
-                document.getElementById('question-content').innerHTML = '<p>Question not available.</p>';
-                return;
-            }
-            
-            document.getElementById('question-level').textContent = `Level ${question.level || currentQuestionLevel}/10`;
-            
-            let content = `<h3>${question.title || 'Practice Problem'}</h3>`;
-            content += `<p>${question.description || 'Solve the following problem:'}</p>`;
-            
-            if (question.examples && question.examples.length > 0) {
-                content += `<h4>Examples:</h4>`;
-                question.examples.forEach((example, index) => {
-                    content += `
-                        <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
-                            <strong>Example ${index + 1}:</strong><br>
-                            <strong>Input:</strong> <code>${example.input}</code><br>
-                            <strong>Output:</strong> <code>${example.output}</code>
-                            ${example.explanation ? `<br><strong>Explanation:</strong> ${example.explanation}` : ''}
-                        </div>
-                    `;
-                });
-            }
-            
-            if (question.function_signature) {
-                content += `<h4>Function Signature:</h4>
-                <pre style="background: #1e1e1e; color: #d4d4d4; padding: 10px; border-radius: 4px;">${question.function_signature}</pre>`;
-            }
-            
-            if (question.constraints && question.constraints.length > 0) {
-                content += `<h4>Constraints:</h4><ul>`;
-                question.constraints.forEach(constraint => {
-                    content += `<li>${constraint}</li>`;
-                });
-                content += `</ul>`;
-            }
-            
-            document.getElementById('question-content').innerHTML = content;
-            resetCodeEditor();
-            
-            // Hide previous results
-            document.getElementById('success-message').style.display = 'none';
-            document.getElementById('hint-section').style.display = 'none';
-            document.getElementById('code-output').textContent = '// Your code analysis will appear here after running';
-        }
+async function loadQuestion(chapterId, level) {
+    try {
+        showLoading('question');
+        
+        const response = await fetch(
+            `${API_BASE_URL}/chapters/${chapterId}/questions/${level}?language=${currentLanguage}`
+        );
+        
+        if (!response.ok) throw new Error('Failed to load question');
+        
+        const data = await response.json();
+        currentQuestionData = data.question;
+        renderQuestion(data.question);
+        updateLevelIndicator(level);
+        
+    } catch (error) {
+        console.error('Error loading question:', error);
+        showError('Failed to load question. Please try again.');
+        renderFallbackQuestion();
+    }
+}
 
-        function renderFallbackQuestion() {
-            document.getElementById('question-content').innerHTML = `
-                <div class="error-message">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Unable to load the question. Please try again or select a different level.
+function renderQuestion(question) {
+    if (!question) {
+        document.getElementById('question-content').innerHTML = '<p>Question not available.</p>';
+        return;
+    }
+    
+    document.getElementById('question-level').textContent = `Level ${question.level || currentQuestionLevel}/10`;
+    
+    let content = `<h3>${question.title || 'Practice Problem'}</h3>`;
+    content += `<p>${question.description || 'Solve the following problem:'}</p>`;
+    
+    if (question.examples && question.examples.length > 0) {
+        content += `<h4>Examples:</h4>`;
+        question.examples.forEach((example, index) => {
+            content += `
+                <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                    <strong>Example ${index + 1}:</strong><br>
+                    <strong>Input:</strong> <code>${example.input}</code><br>
+                    <strong>Output:</strong> <code>${example.output}</code>
+                    ${example.explanation ? `<br><strong>Explanation:</strong> ${example.explanation}` : ''}
                 </div>
             `;
+        });
+    }
+    
+    if (question.function_signature) {
+        content += `<h4>Function Signature:</h4>
+        <pre style="background: #1e1e1e; color: #d4d4d4; padding: 10px; border-radius: 4px;">${question.function_signature}</pre>`;
+    }
+    
+    if (question.time_complexity || question.space_complexity) {
+        content += `<h4>Complexity Analysis:</h4>`;
+        content += `<ul>`;
+        if (question.time_complexity) {
+            content += `<li><strong>Time Complexity:</strong> ${question.time_complexity}</li>`;
         }
+        if (question.space_complexity) {
+            content += `<li><strong>Space Complexity:</strong> ${question.space_complexity}</li>`;
+        }
+        content += `</ul>`;
+    }
+    
+    document.getElementById('question-content').innerHTML = content;
+    resetCodeEditor();
+    
+    // Hide previous results
+    document.getElementById('success-message').style.display = 'none';
+    document.getElementById('hint-section').style.display = 'none';
+    document.getElementById('code-output').textContent = '// Your code analysis will appear here after running';
+}
 
-        function updateLevelIndicator(currentLevel) {
-            const levelIndicator = document.getElementById('level-indicator');
-            levelIndicator.innerHTML = '';
-            
-            for (let i = 1; i <= 10; i++) {
-                const level = document.createElement('div');
-                level.className = `level ${i === currentLevel ? 'active' : ''}`;
-                level.innerHTML = `
-                    <span class="level-number">${i}</span><br>
-                    <small>${getLevelLabel(i)}</small>
-                `;
-                
-                level.addEventListener('click', () => {
-                    if (i !== currentLevel) {
-                        currentQuestionLevel = i;
-                        loadQuestion(currentChapterId, currentQuestionLevel);
-                    }
-                });
-                
-                levelIndicator.appendChild(level);
-            }
-        }
+function renderFallbackQuestion() {
+    document.getElementById('question-content').innerHTML = `
+        <div class="error-message">
+            <i class="fas fa-exclamation-triangle"></i>
+            Unable to load the question. Please try again or select a different level.
+        </div>
+    `;
+}
 
-        function getLevelLabel(level) {
-            const labels = {
-                1: 'Basic', 2: 'Easy', 3: 'Simple', 4: 'Medium', 5: 'Hard',
-                6: 'Advanced', 7: 'Expert', 8: 'Master', 9: 'Challenging', 10: 'Elite'
-            };
-            return labels[level] || 'Level';
-        }
+function updateLevelIndicator(currentLevel) {
+    const levelIndicator = document.getElementById('level-indicator');
+    levelIndicator.innerHTML = '';
+    
+    for (let i = 1; i <= 10; i++) {
+        const level = document.createElement('div');
+        level.className = `level ${i === currentLevel ? 'active' : ''}`;
+        level.innerHTML = `
+            <span class="level-number">${i}</span><br>
+            <small>${getLevelLabel(i)}</small>
+        `;
+        
+        level.addEventListener('click', () => {
+            if (i !== currentLevel) {
+                currentQuestionLevel = i;
+                loadQuestion(currentChapterId, currentQuestionLevel);
+            }
+        });
+        
+        levelIndicator.appendChild(level);
+    }
+}
 
-        function getFileExtension(language) {
-            const extensions = {
-                'python': 'py',
-                'javascript': 'js',
-                'java': 'java',
-                'cpp': 'cpp',
-                'csharp': 'cs'
-            };
-            return extensions[language] || 'txt';
-        }
+function getLevelLabel(level) {
+    const labels = {
+        1: 'Basic', 2: 'Easy', 3: 'Simple', 4: 'Medium', 5: 'Hard',
+        6: 'Advanced', 7: 'Expert', 8: 'Master', 9: 'Challenging', 10: 'Elite'
+    };
+    return labels[level] || 'Level';
+}
 
-        function getChapterIcon(chapterName) {
-            const icons = {
-                'Arrays': 'layer-group',
-                'Strings': 'font',
-                'Linked': 'link',
-                'Stacks': 'layer-group',
-                'Queues': 'stream',
-                'Trees': 'tree',
-                'Graphs': 'project-diagram',
-                'Dynamic': 'bolt',
-                'Sorting': 'sort',
-                'Searching': 'search'
-            };
-            
-            for (const [key, icon] of Object.entries(icons)) {
-                if (chapterName.includes(key)) return icon;
-            }
-            return 'code';
-        }
+function getFileExtension(language) {
+    const extensions = {
+        'python': 'py',
+        'javascript': 'js',
+        'java': 'java',
+        'cpp': 'cpp',
+        'csharp': 'cs'
+    };
+    return extensions[language] || 'txt';
+}
 
-        function resetCodeEditor() {
-            const template = getCodeTemplate();
-            document.getElementById('code-editor').value = template;
-        }
+function getChapterIcon(chapterName) {
+    const icons = {
+        'Arrays': 'layer-group',
+        'Strings': 'font',
+        'Linked': 'link',
+        'Stacks': 'layer-group',
+        'Queues': 'stream',
+        'Trees': 'tree',
+        'Graphs': 'project-diagram',
+        'Dynamic': 'bolt',
+        'Sorting': 'sort',
+        'Searching': 'search'
+    };
+    
+    for (const [key, icon] of Object.entries(icons)) {
+        if (chapterName.includes(key)) return icon;
+    }
+    return 'code';
+}
 
-        function getCodeTemplate() {
-            if (!currentQuestionData || !currentQuestionData.function_signature) {
-                return `// Write your solution here\n// Select a question to see the function signature`;
-            }
-            
-            return currentQuestionData.function_signature + `\n    // Your implementation here\n    \n}`;
-        }
+function resetCodeEditor() {
+    const template = getCodeTemplate();
+    document.getElementById('code-editor').value = template;
+}
 
-        function toggleFullscreen() {
-            const editor = document.getElementById('code-editor');
-            editor.style.height = editor.style.height === '500px' ? '250px' : '500px';
-        }
+function getCodeTemplate() {
+    if (!currentQuestionData || !currentQuestionData.function_signature) {
+        return `// Write your solution here\n// Select a question to see the function signature`;
+    }
+    
+    // For Python, remove the trailing { if present and add proper indentation
+    let signature = currentQuestionData.function_signature;
+    if (signature.includes('{') && currentLanguage === 'python') {
+        signature = signature.split('{')[0].trim();
+    }
+    
+    if (currentLanguage === 'python') {
+        return `${signature}\n    # Your implementation here\n    pass`;
+    } else if (currentLanguage === 'java') {
+        return `${signature}\n        // Your implementation here\n        return null;\n    }\n}`;
+    } else {
+        return `${signature}\n    // Your implementation here\n    return null;\n}`;
+    }
+}
 
-        async function validateCode() {
-            const code = document.getElementById('code-editor').value;
-            const outputElement = document.getElementById('code-output');
-            const runButton = document.getElementById('run-code');
-            
-            if (!currentQuestionData) {
-                outputElement.textContent = 'Error: No question selected. Please select a question first.';
-                return;
-            }
-            
-            if (!code.trim()) {
-                outputElement.textContent = 'Error: Please write some code before running.';
-                return;
-            }
-            
-            // Show loading state
-            runButton.innerHTML = '<span class="loading-spinner"></span> Analyzing...';
-            runButton.disabled = true;
-            outputElement.textContent = 'Analyzing your code...';
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/chapters/${currentChapterId}/validate`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        code: code,
-                        language: currentLanguage,
-                        level: currentQuestionLevel,
-                        question_data: currentQuestionData
-                    })
-                });
-                
-                if (!response.ok) throw new Error('Validation failed');
-                
-                const data = await response.json();
-                displayAnalysisResult(data.analysis);
-                
-            } catch (error) {
-                console.error('Error validating code:', error);
-                outputElement.textContent = 'Error: Could not validate code. Please check your connection and try again.';
-            } finally {
-                // Reset button state
-                runButton.innerHTML = '<i class="fas fa-play"></i> Run Code';
-                runButton.disabled = false;
-            }
-        }
+function toggleFullscreen() {
+    const editor = document.getElementById('code-editor');
+    editor.style.height = editor.style.height === '500px' ? '250px' : '500px';
+}
 
-        function displayAnalysisResult(analysis) {
-            const outputElement = document.getElementById('code-output');
-            const successMessage = document.getElementById('success-message');
-            
-            let output = '';
-            
-            output += `📊 Analysis Result:\n`;
-            output += `==================\n\n`;
-            output += `Score: ${analysis.correctness_score || 0}/100\n`;
-            output += `Status: ${analysis.is_correct ? '✅ PASSED' : '❌ NEEDS IMPROVEMENT'}\n\n`;
-            
-            if (analysis.passed_test_cases !== undefined && analysis.total_test_cases !== undefined) {
-                output += `Test Cases: ${analysis.passed_test_cases}/${analysis.total_test_cases} passed\n\n`;
-            }
-            
-            if (analysis.feedback) {
-                output += `Feedback:\n${analysis.feedback}\n\n`;
-            }
-            
-            if (analysis.strengths && analysis.strengths.length > 0) {
-                output += `✅ Strengths:\n`;
-                analysis.strengths.forEach(strength => {
-                    output += `• ${strength}\n`;
-                });
-                output += `\n`;
-            }
-            
-            if (analysis.improvements && analysis.improvements.length > 0) {
-                output += `🔧 Areas for Improvement:\n`;
-                analysis.improvements.forEach(improvement => {
-                    output += `• ${improvement}\n`;
-                });
-                output += `\n`;
-            }
-            
-            if (analysis.efficiency_analysis) {
-                output += `⚡ Efficiency Analysis:\n${analysis.efficiency_analysis}\n\n`;
-            }
-            
-            if (analysis.bugs && analysis.bugs.length > 0) {
-                output += `🐛 Issues Found:\n`;
-                analysis.bugs.forEach(bug => {
-                    output += `• ${bug}\n`;
-                });
-                output += `\n`;
-            }
-            
-            if (analysis.hints && analysis.hints.length > 0) {
-                output += `💡 Hints for Improvement:\n`;
-                analysis.hints.forEach((hint, index) => {
-                    output += `${index + 1}. ${hint}\n`;
-                });
-            }
-            
-            outputElement.textContent = output;
-            
-            // Show success message if code is correct
-            if (analysis.is_correct) {
-                successMessage.style.display = 'block';
-            }
-        }
+async function validateCode() {
+    const code = document.getElementById('code-editor').value;
+    const outputElement = document.getElementById('code-output');
+    const runButton = document.getElementById('run-code');
+    
+    if (!currentQuestionData) {
+        outputElement.textContent = 'Error: No question selected. Please select a question first.';
+        return;
+    }
+    
+    if (!code.trim()) {
+        outputElement.textContent = 'Error: Please write some code before running.';
+        return;
+    }
+    
+    // Show loading state
+    runButton.innerHTML = '<span class="loading-spinner"></span> Analyzing...';
+    runButton.disabled = true;
+    outputElement.textContent = 'Analyzing your code...';
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/chapters/${currentChapterId}/validate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                code: code,
+                language: currentLanguage,
+                level: currentQuestionLevel,
+                question_data: currentQuestionData
+            })
+        });
+        
+        if (!response.ok) throw new Error('Validation failed');
+        
+        const data = await response.json();
+        displayAnalysisResult(data.analysis);
+        
+    } catch (error) {
+        console.error('Error validating code:', error);
+        outputElement.textContent = 'Error: Could not validate code. Please check your connection and try again.';
+    } finally {
+        // Reset button state
+        runButton.innerHTML = '<i class="fas fa-play"></i> Run Code';
+        runButton.disabled = false;
+    }
+}
 
-        async function showSolution() {
-            if (!currentQuestionData) {
-                showError('No question selected. Please select a question first.');
-                return;
-            }
-            
-            try {
-                const response = await fetch(
-                    `${API_BASE_URL}/chapters/${currentChapterId}/questions/${currentQuestionLevel}/solution?language=${currentLanguage}`
-                );
-                
-                if (!response.ok) throw new Error('Failed to load solution');
-                
-                const data = await response.json();
-                document.getElementById('code-editor').value = data.solution;
-                
-            } catch (error) {
-                console.error('Error loading solution:', error);
-                showError('Failed to load solution. Please try again.');
-            }
-        }
+function displayAnalysisResult(analysis) {
+    const outputElement = document.getElementById('code-output');
+    const successMessage = document.getElementById('success-message');
+    
+    let output = '';
+    
+    output += `📊 Analysis Result:\n`;
+    output += `==================\n\n`;
+    output += `Score: ${analysis.correctness_score || 0}/100\n`;
+    output += `Status: ${analysis.is_correct ? '✅ PASSED' : '❌ NEEDS IMPROVEMENT'}\n\n`;
+    
+    if (analysis.passed_test_cases !== undefined && analysis.total_test_cases !== undefined) {
+        output += `Test Cases: ${analysis.passed_test_cases}/${analysis.total_test_cases} passed\n\n`;
+    }
+    
+    if (analysis.feedback) {
+        output += `Feedback:\n${analysis.feedback}\n\n`;
+    }
+    
+    if (analysis.strengths && analysis.strengths.length > 0) {
+        output += `✅ Strengths:\n`;
+        analysis.strengths.forEach(strength => {
+            output += `• ${strength}\n`;
+        });
+        output += `\n`;
+    }
+    
+    if (analysis.improvements && analysis.improvements.length > 0) {
+        output += `🔧 Areas for Improvement:\n`;
+        analysis.improvements.forEach(improvement => {
+            output += `• ${improvement}\n`;
+        });
+        output += `\n`;
+    }
+    
+    if (analysis.efficiency_analysis) {
+        output += `⚡ Efficiency Analysis:\n${analysis.efficiency_analysis}\n\n`;
+    }
+    
+    if (analysis.bugs && analysis.bugs.length > 0) {
+        output += `🐛 Issues Found:\n`;
+        analysis.bugs.forEach(bug => {
+            output += `• ${bug}\n`;
+        });
+        output += `\n`;
+    }
+    
+    if (analysis.hints && analysis.hints.length > 0) {
+        output += `💡 Hints for Improvement:\n`;
+        analysis.hints.forEach((hint, index) => {
+            output += `${index + 1}. ${hint}\n`;
+        });
+    }
+    
+    outputElement.textContent = output;
+    
+    // Show success message if code is correct
+    if (analysis.is_correct) {
+        successMessage.style.display = 'block';
+    }
+}
 
-        function showHint() {
-            const hintSection = document.getElementById('hint-section');
-            const hintContent = document.getElementById('hint-content');
-            
-            if (!currentQuestionData) {
-                hintContent.textContent = 'Please select a question first to see hints.';
-                hintSection.style.display = 'block';
-                return;
-            }
-            
-            if (currentQuestionData.hints && currentQuestionData.hints.length > 0) {
-                // Show a random hint or cycle through them
-                const randomHint = currentQuestionData.hints[Math.floor(Math.random() * currentQuestionData.hints.length)];
-                hintContent.textContent = randomHint;
-            } else {
-                hintContent.textContent = 'No hints available for this question. Try breaking the problem down into smaller steps.';
-            }
-            
-            hintSection.style.display = 'block';
-        }
+async function showSolution() {
+    if (!currentQuestionData) {
+        showError('No question selected. Please select a question first.');
+        return;
+    }
+    
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/chapters/${currentChapterId}/questions/${currentQuestionLevel}/solution?language=${currentLanguage}`
+        );
+        
+        if (!response.ok) throw new Error('Failed to load solution');
+        
+        const data = await response.json();
+        document.getElementById('code-editor').value = data.solution;
+        
+    } catch (error) {
+        console.error('Error loading solution:', error);
+        showError('Failed to load solution. Please try again.');
+    }
+}
 
-        async function loadNextQuestion() {
-            if (currentQuestionLevel < 10) {
-                currentQuestionLevel++;
-                await loadQuestion(currentChapterId, currentQuestionLevel);
-            } else {
-                // Cycle back to level 1 or show completion message
-                currentQuestionLevel = 1;
-                await loadQuestion(currentChapterId, currentQuestionLevel);
-                showTemporaryMessage('🎉 Completed all levels! Starting over from level 1.');
-            }
-        }
+function showHint() {
+    const hintSection = document.getElementById('hint-section');
+    const hintContent = document.getElementById('hint-content');
+    
+    if (!currentQuestionData) {
+        hintContent.textContent = 'Please select a question first to see hints.';
+        hintSection.style.display = 'block';
+        return;
+    }
+    
+    if (currentQuestionData.hints && currentQuestionData.hints.length > 0) {
+        // Show a random hint or cycle through them
+        const randomHint = currentQuestionData.hints[Math.floor(Math.random() * currentQuestionData.hints.length)];
+        hintContent.textContent = randomHint;
+    } else {
+        hintContent.textContent = 'No hints available for this question. Try breaking the problem down into smaller steps.';
+    }
+    
+    hintSection.style.display = 'block';
+}
 
-        function updateURL() {
-            const url = new URL(window.location);
-            url.searchParams.set('language', currentLanguage);
-            url.searchParams.set('chapter', currentChapterId);
-            window.history.replaceState({}, '', url);
-        }
+async function loadNextQuestion() {
+    if (currentQuestionLevel < 10) {
+        currentQuestionLevel++;
+        await loadQuestion(currentChapterId, currentQuestionLevel);
+    } else {
+        // Cycle back to level 1 or show completion message
+        currentQuestionLevel = 1;
+        await loadQuestion(currentChapterId, currentQuestionLevel);
+        showTemporaryMessage('🎉 Completed all levels! Starting over from level 1.');
+    }
+}
 
-        function showLoading(section) {
-            const elements = {
-                'concept': document.getElementById('concept-content'),
-                'question': document.getElementById('question-content')
-            };
-            
-            if (elements[section]) {
-                elements[section].innerHTML = `
-                    <div style="text-align: center; padding: 40px;">
-                        <span class="loading-spinner"></span>
-                        <p>Loading ${section} content...</p>
-                    </div>
-                `;
-            }
-        }
+function updateURL() {
+    const url = new URL(window.location);
+    url.searchParams.set('language', currentLanguage);
+    url.searchParams.set('chapter', currentChapterId);
+    window.history.replaceState({}, '', url);
+}
 
-        function showError(message) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
-            
-            const contentArea = document.querySelector('.content-area');
-            contentArea.insertBefore(errorDiv, contentArea.firstChild);
-            
-            setTimeout(() => {
-                if (errorDiv.parentNode) {
-                    errorDiv.parentNode.removeChild(errorDiv);
-                }
-            }, 5000);
-        }
+function showLoading(section) {
+    const elements = {
+        'concept': document.getElementById('concept-content'),
+        'question': document.getElementById('question-content')
+    };
+    
+    if (elements[section]) {
+        elements[section].innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <span class="loading-spinner"></span>
+                <p>Loading ${section} content...</p>
+            </div>
+        `;
+    }
+}
 
-        function showTemporaryMessage(message) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'success-message';
-            messageDiv.style.display = 'block';
-            messageDiv.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
-            
-            const contentArea = document.querySelector('.content-area');
-            contentArea.insertBefore(messageDiv, contentArea.firstChild);
-            
-            setTimeout(() => {
-                if (messageDiv.parentNode) {
-                    messageDiv.parentNode.removeChild(messageDiv);
-                }
-            }, 3000);
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+    
+    const contentArea = document.querySelector('.content-area');
+    contentArea.insertBefore(errorDiv, contentArea.firstChild);
+    
+    setTimeout(() => {
+        if (errorDiv.parentNode) {
+            errorDiv.parentNode.removeChild(errorDiv);
         }
+    }, 5000);
+}
+
+function showTemporaryMessage(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'success-message';
+    messageDiv.style.display = 'block';
+    messageDiv.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+    
+    const contentArea = document.querySelector('.content-area');
+    contentArea.insertBefore(messageDiv, contentArea.firstChild);
+    
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.parentNode.removeChild(messageDiv);
+        }
+    }, 3000);
+}
     </script>
 </body>
 </html>

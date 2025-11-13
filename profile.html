@@ -172,48 +172,117 @@
     </div>
 
     <script>
+        // Career data configuration
+        const careerData = {
+            'fullstack': { 
+                name: 'Full-Stack Developer', 
+                desc: 'Build complete web applications with frontend and backend technologies' 
+            },
+            'frontend': { 
+                name: 'Frontend Developer', 
+                desc: 'Create engaging user interfaces and experiences for web applications' 
+            },
+            'backend': { 
+                name: 'Backend Developer', 
+                desc: 'Develop server-side logic, databases, and APIs for web applications' 
+            },
+            'datascience': { 
+                name: 'Data Scientist', 
+                desc: 'Extract insights from data using statistical analysis and machine learning' 
+            },
+            'machinelearning': { 
+                name: 'Machine Learning Engineer', 
+                desc: 'Design and implement AI models and machine learning systems' 
+            },
+            'mobile': { 
+                name: 'Mobile Developer', 
+                desc: 'Create applications for iOS and Android platforms' 
+            },
+            'devops': { 
+                name: 'DevOps Engineer', 
+                desc: 'Automate and optimize development, testing, and deployment processes' 
+            },
+            'cybersecurity': { 
+                name: 'Cyber Security Analyst', 
+                desc: 'Protect systems and networks from cyber threats and attacks' 
+            },
+            'uxui': { 
+                name: 'UX/UI Designer', 
+                desc: 'Design intuitive and visually appealing user interfaces and experiences' 
+            },
+            'qa': { 
+                name: 'QA Engineer', 
+                desc: 'Ensure software quality through testing and automation' 
+            }
+        };
+
         // Load user profile data
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔄 Loading user profile...');
+            
             const userProfile = localStorage.getItem('userProfile');
             if (userProfile) {
-                const profile = JSON.parse(userProfile);
-                
-                // Update form fields
-                document.getElementById('profileName').value = profile.name || '';
-                document.getElementById('profileEmail').value = profile.email || '';
-                document.getElementById('profileExperience').value = profile.experience || 'beginner';
-                document.getElementById('profileCareer').value = profile.career || 'fullstack';
-                
-                // Update career badge and description
-                updateCareerDisplay(profile.career);
+                try {
+                    const profile = JSON.parse(userProfile);
+                    console.log('✅ User profile loaded:', profile);
+                    
+                    // Update form fields
+                    document.getElementById('profileName').value = profile.name || '';
+                    document.getElementById('profileEmail').value = profile.email || '';
+                    document.getElementById('profileExperience').value = profile.experience || 'beginner';
+                    document.getElementById('profileCareer').value = profile.career || 'fullstack';
+                    
+                    // Update career badge and description
+                    updateCareerDisplay(profile.career);
+                    
+                } catch (error) {
+                    console.error('❌ Error parsing user profile:', error);
+                    // Load default values
+                    updateCareerDisplay('fullstack');
+                }
+            } else {
+                console.log('ℹ️ No user profile found, using defaults');
+                updateCareerDisplay('fullstack');
             }
         });
 
         // Update career display when selection changes
         document.getElementById('profileCareer').addEventListener('change', function() {
-            updateCareerDisplay(this.value);
+            const selectedCareer = this.value;
+            console.log('🎯 Career selection changed to:', selectedCareer);
+            updateCareerDisplay(selectedCareer);
         });
 
         function updateCareerDisplay(career) {
-            const careerData = {
-                'fullstack': { name: 'Full-Stack Developer', desc: 'Build complete web applications with frontend and backend technologies' },
-                'frontend': { name: 'Frontend Developer', desc: 'Create engaging user interfaces and experiences for web applications' },
-                'backend': { name: 'Backend Developer', desc: 'Develop server-side logic, databases, and APIs for web applications' },
-                'datascience': { name: 'Data Scientist', desc: 'Extract insights from data using statistical analysis and machine learning' },
-                'machinelearning': { name: 'Machine Learning Engineer', desc: 'Design and implement AI models and machine learning systems' },
-                'mobile': { name: 'Mobile Developer', desc: 'Create applications for iOS and Android platforms' },
-                'devops': { name: 'DevOps Engineer', desc: 'Automate and optimize development, testing, and deployment processes' },
-                'cybersecurity': { name: 'Cyber Security Analyst', desc: 'Protect systems and networks from cyber threats and attacks' },
-                'uxui': { name: 'UX/UI Designer', desc: 'Design intuitive and visually appealing user interfaces and experiences' },
-                'qa': { name: 'QA Engineer', desc: 'Ensure software quality through testing and automation' }
-            };
-
+            console.log('🔄 Updating career display for:', career);
+            
             const careerInfo = careerData[career] || careerData['fullstack'];
-            document.getElementById('currentCareerBadge').textContent = careerInfo.name;
-            document.getElementById('currentCareerDesc').textContent = careerInfo.desc;
+            
+            // Update the badge
+            const badgeElement = document.getElementById('currentCareerBadge');
+            if (badgeElement) {
+                badgeElement.textContent = careerInfo.name;
+                console.log('✅ Career badge updated to:', careerInfo.name);
+            }
+            
+            // Update the description
+            const descElement = document.getElementById('currentCareerDesc');
+            if (descElement) {
+                descElement.textContent = careerInfo.desc;
+                console.log('✅ Career description updated');
+            }
+            
+            // Update the dropdown selection
+            const dropdown = document.getElementById('profileCareer');
+            if (dropdown) {
+                dropdown.value = career;
+                console.log('✅ Dropdown selection updated to:', career);
+            }
         }
 
         function updateProfile() {
+            console.log('💾 Updating user profile...');
+            
             const updatedProfile = {
                 name: document.getElementById('profileName').value,
                 email: document.getElementById('profileEmail').value,
@@ -222,19 +291,72 @@
                 setupComplete: true
             };
 
-            localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
-            alert('Profile updated successfully!');
-            
-            // Redirect to roadmap to refresh with new career
-            window.location.href = 'roadmap.html';
+            console.log('📝 New profile data:', updatedProfile);
+
+            try {
+                // Save to localStorage
+                localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+                
+                // Also update the app state for consistency
+                const savedState = localStorage.getItem('soloLevelingState');
+                if (savedState) {
+                    const appState = JSON.parse(savedState);
+                    appState.userProfile = updatedProfile;
+                    appState.targetCareer = updatedProfile.career;
+                    localStorage.setItem('soloLevelingState', JSON.stringify(appState));
+                }
+                
+                console.log('✅ Profile updated successfully');
+                alert('Profile updated successfully! Your roadmap will be regenerated with the new career path.');
+                
+                // Clear existing roadmap data to force regeneration
+                if (localStorage.getItem('soloLevelingState')) {
+                    const appState = JSON.parse(localStorage.getItem('soloLevelingState'));
+                    appState.roadmapGenerated = false;
+                    appState.roadmapData = null;
+                    localStorage.setItem('soloLevelingState', JSON.stringify(appState));
+                }
+                
+                // Redirect to roadmap to refresh with new career
+                setTimeout(() => {
+                    window.location.href = 'roadmap.html';
+                }, 1000);
+                
+            } catch (error) {
+                console.error('❌ Error updating profile:', error);
+                alert('Error updating profile. Please try again.');
+            }
         }
 
         function resetProfile() {
-            if (confirm('Are you sure you want to reset your profile? This will clear all your data.')) {
+            if (confirm('Are you sure you want to reset your profile? This will clear all your data and return you to the setup page.')) {
+                console.log('🔄 Resetting user profile...');
+                
+                // Clear all user data
                 localStorage.removeItem('userProfile');
-                window.location.href = 'index.html';
+                localStorage.removeItem('soloLevelingState');
+                
+                console.log('✅ Profile reset completed');
+                alert('Profile reset successfully. Redirecting to setup...');
+                
+                // Redirect to setup page
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
             }
         }
+
+        // Debug function to check current state
+        function debugProfile() {
+            console.log('=== DEBUG PROFILE INFO ===');
+            console.log('User Profile:', localStorage.getItem('userProfile'));
+            console.log('App State:', localStorage.getItem('soloLevelingState'));
+            console.log('Current Career Selection:', document.getElementById('profileCareer').value);
+            console.log('==========================');
+        }
+
+        // Call debug on load for troubleshooting
+        // debugProfile();
     </script>
 </body>
 </html>

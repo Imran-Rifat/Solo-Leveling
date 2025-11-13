@@ -130,7 +130,11 @@ function showNotification(message, type = 'info') {
 
 // API utility functions
 async function apiCall(endpoint, method = 'GET', data = null) {
-    const baseUrl = 'http://localhost:5000/api';
+    // const baseUrl = 'http://localhost:5000/api';
+    // Change from:
+
+// To:
+const baseUrl = 'https://solo-leveling-backend-b1is.onrender.com/api';
     
     const options = {
         method: method,

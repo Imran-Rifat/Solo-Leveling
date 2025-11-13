@@ -1,7 +1,7 @@
-// roadmap.js - COMPLETELY REWRITTEN WITH PROPER STATE MANAGEMENT
+// roadmap.js - COMPLETE OPENAI API INTEGRATION
 console.log('🚀 AI Roadmap System loaded');
 
-// Global app state with proper initialization
+// Global app state
 let appState = {
     userId: null,
     targetCareer: null,
@@ -13,49 +13,49 @@ let appState = {
     lastGenerated: null
 };
 
-// Career-specific configurations
+// Career configurations
 const careerConfigs = {
     'fullstack': {
         title: 'Full-Stack Developer',
-        description: 'Master both frontend and backend technologies',
-        skills: ['JavaScript', 'React', 'Node.js', 'Database', 'APIs'],
-        codingLanguages: ['JavaScript', 'Python', 'SQL']
+        description: 'Master both frontend and backend web development',
+        skills: ['JavaScript', 'React', 'Node.js', 'Database', 'APIs', 'HTML/CSS'],
+        languages: ['JavaScript', 'Python', 'SQL']
     },
     'frontend': {
         title: 'Frontend Developer',
         description: 'Specialize in user interface and client-side development',
         skills: ['HTML/CSS', 'JavaScript', 'React', 'TypeScript', 'UI/UX'],
-        codingLanguages: ['JavaScript', 'TypeScript']
+        languages: ['JavaScript', 'TypeScript']
     },
     'backend': {
         title: 'Backend Developer',
         description: 'Focus on server-side logic and database management',
-        skills: ['Node.js', 'Python', 'Java', 'Database', 'APIs'],
-        codingLanguages: ['JavaScript', 'Python', 'Java', 'C#']
+        skills: ['Node.js', 'Python', 'Java', 'Database', 'APIs', 'Authentication'],
+        languages: ['JavaScript', 'Python', 'Java', 'C#']
     },
     'datascience': {
         title: 'Data Scientist',
         description: 'Analyze data and build machine learning models',
         skills: ['Python', 'Statistics', 'Machine Learning', 'SQL', 'Data Visualization'],
-        codingLanguages: ['Python', 'R', 'SQL']
+        languages: ['Python', 'R', 'SQL']
     },
     'machinelearning': {
         title: 'Machine Learning Engineer',
-        description: 'Design and implement ML systems and algorithms',
+        description: 'Design and implement AI models and systems',
         skills: ['Python', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'Data Engineering'],
-        codingLanguages: ['Python', 'C++']
+        languages: ['Python', 'C++']
     },
     'mobile': {
         title: 'Mobile Developer',
         description: 'Build applications for iOS and Android platforms',
         skills: ['React Native', 'Swift', 'Kotlin', 'Mobile UI', 'APIs'],
-        codingLanguages: ['JavaScript', 'Swift', 'Kotlin', 'Java']
+        languages: ['JavaScript', 'Swift', 'Kotlin', 'Java']
     },
     'devops': {
         title: 'DevOps Engineer',
         description: 'Manage deployment, infrastructure, and CI/CD pipelines',
         skills: ['Docker', 'Kubernetes', 'AWS', 'CI/CD', 'Linux'],
-        codingLanguages: ['Python', 'JavaScript', 'Bash']
+        languages: ['Python', 'JavaScript', 'Bash']
     }
 };
 
@@ -71,29 +71,21 @@ async function initializeAIRoadmap() {
         // Load all state from localStorage
         await loadCompleteAppState();
         
-        // Check if we have a valid saved roadmap
-        if (appState.roadmapGenerated && appState.roadmapData && isValidRoadmap(appState.roadmapData)) {
+        // Check if we need to regenerate roadmap
+        if (shouldRegenerateRoadmap()) {
+            console.log('🔄 Regenerating roadmap...');
+            await generateNewRoadmap();
+        } else if (appState.roadmapGenerated && appState.roadmapData && isValidRoadmap(appState.roadmapData)) {
             console.log('✅ Loading existing roadmap from storage');
             displayExistingRoadmap();
-            return;
+        } else {
+            console.log('🆕 No valid roadmap found, generating new one...');
+            await generateNewRoadmap();
         }
-        
-        // Check if we have user profile for new roadmap generation
-        if (!appState.userProfile || !appState.userProfile.career) {
-            console.error('❌ Missing user profile data');
-            showAIErrorState('Please complete your career setup first. Redirecting to profile...');
-            setTimeout(() => {
-                window.location.href = 'profile.html';
-            }, 3000);
-            return;
-        }
-        
-        console.log('🆕 Generating new AI-powered roadmap...');
-        await generateNewRoadmap();
         
     } catch (error) {
         console.error('❌ Roadmap initialization failed:', error);
-        showAIErrorState('Failed to initialize roadmap system. Please try again.');
+        showAIErrorState('Failed to load roadmap. Please try again.');
     }
 }
 
@@ -105,11 +97,7 @@ async function loadCompleteAppState() {
         const userProfile = localStorage.getItem('userProfile');
         if (userProfile) {
             appState.userProfile = JSON.parse(userProfile);
-            console.log('👤 User profile loaded:', {
-                name: appState.userProfile.name,
-                career: appState.userProfile.career,
-                experience: appState.userProfile.experience
-            });
+            console.log('👤 User profile loaded:', appState.userProfile);
         }
 
         // Load complete app state
@@ -118,33 +106,47 @@ async function loadCompleteAppState() {
             const parsedState = JSON.parse(savedState);
             appState = { ...appState, ...parsedState };
             console.log('💾 App state loaded from storage');
-            
-            // Validate and set roadmap data
-            if (parsedState.roadmapData && isValidRoadmap(parsedState.roadmapData)) {
-                appState.roadmapData = parsedState.roadmapData;
-                appState.roadmapGenerated = true;
-                console.log('📊 Valid roadmap data found');
-            } else if (parsedState.analysis?.learning_roadmap && isValidRoadmap(parsedState.analysis.learning_roadmap)) {
-                appState.roadmapData = parsedState.analysis.learning_roadmap;
-                appState.roadmapGenerated = true;
-                console.log('📚 Legacy roadmap data migrated');
-            }
         }
         
     } catch (error) {
         console.error('❌ Failed to load app state:', error);
-        // Reset state on error
         appState.roadmapGenerated = false;
         appState.roadmapData = null;
     }
+}
+
+function shouldRegenerateRoadmap() {
+    if (!appState.userProfile || !appState.userProfile.career) {
+        console.log('❌ No user profile found');
+        return false;
+    }
+    
+    if (!appState.roadmapData || !appState.roadmapGenerated) {
+        console.log('🔄 No existing roadmap found');
+        return true;
+    }
+    
+    const currentCareer = appState.userProfile.career;
+    const roadmapCareer = appState.roadmapData.career || appState.targetCareer;
+    
+    if (currentCareer !== roadmapCareer) {
+        console.log(`🔄 Career changed from ${roadmapCareer} to ${currentCareer}`);
+        return true;
+    }
+    
+    if (!isValidRoadmap(appState.roadmapData)) {
+        console.log('🔄 Invalid roadmap data');
+        return true;
+    }
+    
+    return false;
 }
 
 function isValidRoadmap(roadmap) {
     return roadmap && 
            typeof roadmap === 'object' && 
            Array.isArray(roadmap.phases) && 
-           roadmap.phases.length > 0 &&
-           roadmap.total_duration_weeks > 0;
+           roadmap.phases.length > 0;
 }
 
 async function generateNewRoadmap() {
@@ -155,46 +157,43 @@ async function generateNewRoadmap() {
         
         console.log('🎯 Generating roadmap for:', { career, userName, experience });
         
-        // Update UI immediately
+        // Update UI
         updateBasicUI(career, userName);
         showAILoadingState();
 
-        // Generate AI roadmap
+        // Generate AI roadmap using OpenAI
         const aiRoadmap = await generateAIRoadmap(career, experience, userName);
         
         if (aiRoadmap && aiRoadmap.success !== false && isValidRoadmap(aiRoadmap)) {
-            // Save roadmap data immediately
-            await saveRoadmapData(aiRoadmap);
+            // Add career information
+            aiRoadmap.career = career;
             
-            // Display the new roadmap
+            // Save and display
+            await saveRoadmapData(aiRoadmap);
             displayRoadmapContent(aiRoadmap);
             
-            showAINotification('🎉 AI roadmap generated successfully!', 'success');
+            showAINotification(`🎉 ${getCareerTitle(career)} roadmap generated!`, 'success');
             
         } else {
-            throw new Error('Invalid roadmap data received from AI');
+            throw new Error('Invalid roadmap data from AI');
         }
 
     } catch (error) {
-        console.error('❌ Failed to generate new roadmap:', error);
-        showAIErrorState('Failed to generate AI roadmap. Loading demo roadmap...');
-        loadDemoRoadmap();
+        console.error('❌ Failed to generate roadmap:', error);
+        showAIErrorState('AI generation failed. Loading career-specific content...');
+        loadCareerSpecificContent();
     }
-}
-
-function updateBasicUI(career, userName) {
-    const careerConfig = careerConfigs[career] || careerConfigs['fullstack'];
-    
-    document.getElementById('targetCareerName').textContent = careerConfig.title;
-    document.getElementById('roadmapDescription').textContent = `Personalized learning path for ${userName}`;
 }
 
 async function generateAIRoadmap(career, experience, userName) {
     try {
-        console.log('🤖 Calling AI roadmap generation API...');
+        console.log('🤖 Calling OpenAI API for roadmap generation...');
         
         const cvAnalysis = appState.analysis || {};
         const userSkills = cvAnalysis.skills_analysis?.current_skills || [];
+        
+        // Prepare the prompt for OpenAI
+        const prompt = createOpenAIPrompt(career, experience, userName, userSkills);
         
         const response = await fetch('http://localhost:5000/api/ai/generate-roadmap', {
             method: 'POST',
@@ -206,258 +205,276 @@ async function generateAIRoadmap(career, experience, userName) {
                 experience_level: experience,
                 user_name: userName,
                 user_skills: userSkills,
-                timeframe_weeks: 24
+                timeframe_weeks: 24,
+                prompt: prompt
             })
         });
 
         if (!response.ok) {
-            throw new Error(`API error: ${response.status} ${response.statusText}`);
+            const errorText = await response.text();
+            throw new Error(`API error: ${response.status} - ${errorText}`);
         }
 
-        const roadmapData = await response.json();
-        console.log('✅ AI roadmap API response received');
+        const result = await response.json();
+        console.log('✅ OpenAI API response received');
         
-        if (!roadmapData.success) {
-            throw new Error(roadmapData.error || 'Roadmap generation failed');
+        if (!result.success) {
+            throw new Error(result.error || 'OpenAI generation failed');
         }
 
-        return roadmapData;
+        return result;
 
     } catch (error) {
-        console.error('❌ AI roadmap generation failed:', error);
-        // Return high-quality fallback roadmap
-        return generateComprehensiveFallbackRoadmap(career, experience, userName);
+        console.error('❌ OpenAI API call failed:', error);
+        // Return a high-quality fallback roadmap
+        return generateComprehensiveFallback(career, experience, userName);
     }
 }
 
-function generateComprehensiveFallbackRoadmap(career, experience, userName) {
+function createOpenAIPrompt(career, experience, userName, userSkills) {
+    const careerConfig = careerConfigs[career] || careerConfigs['fullstack'];
+    const careerTitle = careerConfig.title;
+    
+    const skillsText = userSkills.map(skill => skill.skill).join(', ') || 'No specific skills identified';
+    
+    return `
+Create a comprehensive, practical learning roadmap for ${userName}, a ${experience} level learner who wants to become a ${careerTitle}.
+
+CAREER TARGET: ${careerTitle}
+EXPERIENCE LEVEL: ${experience}
+USER NAME: ${userName}
+EXISTING SKILLS: ${skillsText}
+TIMEFRAME: 24 weeks
+WEEKLY COMMITMENT: 15 hours per week
+
+Please generate a structured, industry-relevant learning path with:
+
+1. 4-6 learning phases with clear progression
+2. Each phase should have 2-3 practical modules
+3. Each module must include:
+   - Specific, actionable learning objectives
+   - Technical skills that will be acquired
+   - Real-world applications and projects
+   - Duration in weeks (1-4 weeks per module)
+   - 2-3 high-quality, free learning resources
+   - Clear learning outcomes
+
+4. Include career guidance with:
+   - Current job market analysis for this role
+   - Realistic salary expectations
+   - Portfolio project recommendations
+   - Interview preparation topics
+
+IMPORTANT: Focus on practical, hands-on learning. Include coding exercises, projects, and real-world applications.
+
+Return ONLY valid JSON in this exact structure:
+{
+    "overview": "Brief description of the learning path",
+    "total_duration_weeks": 24,
+    "weekly_commitment_hours": 15,
+    "readiness_score": 65,
+    "phases": [
+        {
+            "phase_id": "phase_1",
+            "title": "Phase title",
+            "description": "Phase description",
+            "duration_weeks": 6,
+            "focus_areas": ["Area 1", "Area 2"],
+            "learning_objectives": ["Objective 1", "Objective 2"],
+            "modules": [
+                {
+                    "module_id": "module_1_1",
+                    "title": "Module title",
+                    "description": "Module description",
+                    "duration_weeks": 3,
+                    "technical_skills": ["Skill 1", "Skill 2"],
+                    "learning_outcomes": ["Outcome 1", "Outcome 2"],
+                    "resources": [
+                        {
+                            "title": "Resource title",
+                            "url": "https://real-website.com/path",
+                            "type": "tutorial|course|documentation|project",
+                            "free": true,
+                            "description": "Brief description of what this resource offers"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "career_guidance": {
+        "job_market_analysis": "Current market analysis",
+        "salary_expectations": "Salary ranges for different levels",
+        "portfolio_projects": ["Project 1", "Project 2", "Project 3"],
+        "interview_preparation": ["Topic 1", "Topic 2", "Topic 3"]
+    }
+}
+
+Make it practical, industry-relevant, and tailored for a ${experience} level learner. Include real resources from platforms like freeCodeCamp, MDN, official documentation, and other reputable free learning platforms.
+`;
+}
+
+function generateComprehensiveFallback(career, experience, userName) {
     console.log('🔄 Generating comprehensive fallback roadmap');
     
     const careerConfig = careerConfigs[career] || careerConfigs['fullstack'];
-    const codingLanguages = careerConfig.codingLanguages || ['JavaScript', 'Python'];
+    const careerTitle = careerConfig.title;
     
     return {
-        overview: `Comprehensive ${careerConfig.title} learning path for ${userName}. This roadmap covers essential skills and technologies needed to become a proficient ${careerConfig.title}.`,
+        overview: `Comprehensive ${careerTitle} learning path for ${userName}. This roadmap covers essential skills and practical projects to become job-ready.`,
         total_duration_weeks: 24,
         weekly_commitment_hours: 15,
-        readiness_score: Math.floor(Math.random() * 30) + 40, // 40-70%
+        readiness_score: Math.floor(Math.random() * 30) + 40,
         phases: [
             {
                 phase_id: "phase_foundation",
-                title: "Foundation Skills",
-                description: `Build fundamental programming and computer science knowledge for ${careerConfig.title} role`,
+                title: `${careerTitle} Fundamentals`,
+                description: `Build strong foundation in core ${careerTitle.toLowerCase()} concepts and technologies`,
                 duration_weeks: 6,
-                focus_areas: ["Programming Basics", "Computer Science Fundamentals", "Development Tools"],
+                focus_areas: ["Core Concepts", "Essential Tools", "Basic Projects"],
                 learning_objectives: [
-                    "Master core programming concepts",
-                    "Understand algorithms and data structures",
-                    "Learn version control with Git",
-                    "Set up development environment"
+                    "Master fundamental concepts and principles",
+                    "Learn essential development tools and workflows",
+                    "Build basic projects to apply knowledge"
                 ],
                 modules: [
                     {
                         module_id: "module_programming_basics",
-                        title: `${codingLanguages[0]} Programming Fundamentals`,
-                        description: `Learn ${codingLanguages[0]} syntax, data types, control structures, and basic programming concepts`,
+                        title: `${careerConfig.languages[0]} Programming`,
+                        description: `Learn ${careerConfig.languages[0]} programming fundamentals and best practices`,
                         duration_weeks: 3,
-                        technical_skills: [codingLanguages[0], "Data Types", "Control Structures", "Functions", "Debugging"],
+                        technical_skills: [careerConfig.languages[0], "Programming Basics", "Debugging"],
                         learning_outcomes: [
-                            `Write basic ${codingLanguages[0]} programs`,
-                            "Understand variables and data types",
-                            "Implement functions and control flow",
-                            "Debug and test simple programs"
+                            `Write basic ${careerConfig.languages[0]} programs`,
+                            "Understand programming concepts and patterns",
+                            "Debug and test code effectively"
                         ],
                         resources: [
                             {
-                                "title": `${codingLanguages[0]} Official Documentation`,
+                                "title": `${careerConfig.languages[0]} Official Documentation`,
                                 "url": "https://developer.mozilla.org/docs/Web/JavaScript",
                                 "type": "documentation",
                                 "free": true,
-                                "description": `Official ${codingLanguages[0]} documentation and tutorials`
+                                "description": `Official ${careerConfig.languages[0]} documentation and guides`
                             },
                             {
                                 "title": "freeCodeCamp Programming Course",
                                 "url": "https://www.freecodecamp.org/",
-                                "type": "interactive",
+                                "type": "course",
                                 "free": true,
-                                "description": "Interactive programming courses"
+                                "description": "Interactive programming courses and projects"
                             }
                         ]
                     },
                     {
-                        module_id: "module_data_structures",
-                        title: "Data Structures & Algorithms",
-                        description: "Essential data structures and algorithm concepts for efficient programming",
+                        module_id: "module_core_concepts",
+                        title: `${careerTitle} Core Concepts`,
+                        description: `Master the fundamental concepts and patterns used in ${careerTitle.toLowerCase()} roles`,
                         duration_weeks: 3,
-                        technical_skills: ["Algorithms", "Data Structures", "Problem Solving", "Time Complexity"],
-                        learning_outcomes: [
-                            "Implement common data structures",
-                            "Solve algorithmic problems",
-                            "Analyze time and space complexity",
-                            "Apply data structures to real problems"
-                        ],
-                        resources: [
-                            {
-                                "title": "GeeksforGeeks DSA",
-                                "url": "https://www.geeksforgeeks.org/data-structures/",
-                                "type": "tutorial",
-                                "free": true,
-                                "description": "Comprehensive data structures tutorials"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                phase_id: "phase_core_tech",
-                title: "Core Technologies",
-                description: `Master the essential technologies and frameworks for ${careerConfig.title}`,
-                duration_weeks: 8,
-                focus_areas: careerConfig.skills.slice(0, 3),
-                learning_objectives: [
-                    "Learn core frameworks and libraries",
-                    "Understand database design and management",
-                    "Build complete applications",
-                    "Implement best practices"
-                ],
-                modules: [
-                    {
-                        module_id: "module_frameworks",
-                        title: `${careerConfig.title} Frameworks`,
-                        description: `Learn the main frameworks and tools used in ${careerConfig.title} development`,
-                        duration_weeks: 4,
                         technical_skills: careerConfig.skills.slice(0, 4),
                         learning_outcomes: [
-                            "Build applications using industry-standard frameworks",
-                            "Understand framework architecture and patterns",
-                            "Implement common features and components",
-                            "Follow best practices and conventions"
+                            "Understand core concepts and architecture",
+                            "Apply best practices and patterns",
+                            "Build foundational projects"
                         ],
                         resources: [
                             {
-                                "title": "Framework Official Documentation",
-                                "url": "https://reactjs.org/docs/getting-started.html",
-                                "type": "documentation",
-                                "free": true,
-                                "description": "Official framework documentation"
-                            }
-                        ]
-                    },
-                    {
-                        module_id: "module_database",
-                        title: "Database Systems",
-                        description: "Learn database design, management, and optimization",
-                        duration_weeks: 4,
-                        technical_skills: ["SQL", "Database Design", "ORM", "Performance"],
-                        learning_outcomes: [
-                            "Design efficient database schemas",
-                            "Write complex SQL queries",
-                            "Understand database optimization",
-                            "Implement data access layers"
-                        ],
-                        resources: [
-                            {
-                                "title": "SQL Tutorial",
-                                "url": "https://www.w3schools.com/sql/",
+                                "title": `${careerTitle} Best Practices`,
+                                "url": "https://github.com/",
                                 "type": "tutorial",
                                 "free": true,
-                                "description": "Comprehensive SQL tutorial"
+                                "description": "Industry best practices and patterns"
                             }
                         ]
                     }
                 ]
             },
             {
-                phase_id: "phase_advanced",
-                title: "Advanced Concepts",
-                description: "Deep dive into advanced topics and real-world application development",
-                duration_weeks: 6,
-                focus_areas: ["System Design", "Performance", "Security", "Deployment"],
+                phase_id: "phase_development",
+                title: "Practical Development",
+                description: "Apply concepts to real-world projects and scenarios",
+                duration_weeks: 8,
+                focus_areas: ["Project Development", "Advanced Concepts", "Real-world Applications"],
                 learning_objectives: [
-                    "Design scalable systems",
-                    "Optimize application performance",
-                    "Implement security best practices",
-                    "Deploy and maintain applications"
+                    "Build complete projects from scratch",
+                    "Apply advanced concepts and techniques",
+                    "Solve real-world problems"
                 ],
                 modules: [
                     {
-                        module_id: "module_system_design",
-                        title: "System Design & Architecture",
-                        description: "Learn to design scalable and maintainable software systems",
-                        duration_weeks: 3,
-                        technical_skills: ["System Design", "Architecture Patterns", "Scalability", "Microservices"],
+                        module_id: "module_projects",
+                        title: "Project Development",
+                        description: "Build practical projects to apply your skills",
+                        duration_weeks: 4,
+                        technical_skills: [...careerConfig.skills.slice(0, 4), "Project Management"],
                         learning_outcomes: [
-                            "Design software architecture",
-                            "Understand scalability patterns",
-                            "Implement microservices architecture",
-                            "Plan for system growth"
+                            "Plan and execute complete projects",
+                            "Apply skills to real scenarios",
+                            "Debug and optimize applications"
                         ],
                         resources: [
                             {
-                                "title": "System Design Primer",
-                                "url": "https://github.com/donnemartin/system-design-primer",
-                                "type": "tutorial",
+                                "title": "Project Ideas and Tutorials",
+                                "url": "https://github.com/florinpop17/app-ideas",
+                                "type": "project",
                                 "free": true,
-                                "description": "Learn how to design large-scale systems"
+                                "description": "Collection of project ideas for practice"
                             }
                         ]
                     },
                     {
-                        module_id: "module_deployment",
-                        title: "Deployment & DevOps",
-                        description: "Learn to deploy, monitor, and maintain applications in production",
-                        duration_weeks: 3,
-                        technical_skills: ["Deployment", "CI/CD", "Monitoring", "Containers"],
+                        module_id: "module_advanced",
+                        title: "Advanced Techniques",
+                        description: "Learn advanced concepts and optimization techniques",
+                        duration_weeks: 4,
+                        technical_skills: [...careerConfig.skills.slice(2, 6), "Performance", "Optimization"],
                         learning_outcomes: [
-                            "Deploy applications to cloud platforms",
-                            "Set up CI/CD pipelines",
-                            "Monitor application performance",
-                            "Use containerization technologies"
+                            "Implement advanced features",
+                            "Optimize application performance",
+                            "Apply industry best practices"
                         ],
                         resources: [
                             {
-                                "title": "Docker Getting Started",
-                                "url": "https://docs.docker.com/get-started/",
-                                "type": "tutorial",
+                                "title": "Advanced Concepts Guide",
+                                "url": "https://developer.mozilla.org/",
+                                "type": "documentation",
                                 "free": true,
-                                "description": "Learn containerization with Docker"
+                                "description": "Advanced concepts and techniques"
                             }
                         ]
                     }
                 ]
             },
             {
-                phase_id: "phase_projects",
-                title: "Portfolio Projects",
-                description: "Build real-world projects and prepare for job applications",
-                duration_weeks: 4,
-                focus_areas: ["Project Development", "Portfolio Building", "Interview Preparation"],
+                phase_id: "phase_specialization",
+                title: "Specialization & Career",
+                description: "Focus on specialization areas and career preparation",
+                duration_weeks: 6,
+                focus_areas: ["Specialization", "Portfolio", "Interview Preparation"],
                 learning_objectives: [
-                    "Build complete portfolio projects",
-                    "Showcase skills to employers",
-                    "Prepare for technical interviews",
-                    "Develop professional network"
+                    "Develop specialized expertise",
+                    "Build professional portfolio",
+                    "Prepare for job interviews"
                 ],
                 modules: [
                     {
                         module_id: "module_portfolio",
                         title: "Portfolio Development",
-                        description: "Build and showcase projects that demonstrate your skills",
-                        duration_weeks: 2,
-                        technical_skills: ["Project Planning", "Implementation", "Documentation", "Deployment"],
+                        description: "Create a professional portfolio showcasing your skills",
+                        duration_weeks: 3,
+                        technical_skills: ["Portfolio Development", "Project Presentation", "GitHub"],
                         learning_outcomes: [
-                            "Plan and execute complete projects",
-                            "Document code and projects effectively",
-                            "Deploy projects for public access",
-                            "Create compelling project presentations"
+                            "Build professional portfolio",
+                            "Showcase projects effectively",
+                            "Create compelling project documentation"
                         ],
                         resources: [
                             {
-                                "title": "Project Ideas Repository",
-                                "url": "https://github.com/florinpop17/app-ideas",
-                                "type": "project",
+                                "title": "Portfolio Guide",
+                                "url": "https://medium.com/",
+                                "type": "tutorial",
                                 "free": true,
-                                "description": "Collection of project ideas for developers"
+                                "description": "Guide to building developer portfolios"
                             }
                         ]
                     },
@@ -465,13 +482,12 @@ function generateComprehensiveFallbackRoadmap(career, experience, userName) {
                         module_id: "module_interview",
                         title: "Interview Preparation",
                         description: "Prepare for technical interviews and job applications",
-                        duration_weeks: 2,
-                        technical_skills: ["Problem Solving", "System Design", "Behavioral Interviews", "Negotiation"],
+                        duration_weeks: 3,
+                        technical_skills: ["Problem Solving", "System Design", "Communication"],
                         learning_outcomes: [
                             "Solve technical interview problems",
-                            "Design systems in interviews",
-                            "Handle behavioral questions",
-                            "Negotiate job offers"
+                            "Design systems effectively",
+                            "Communicate technical concepts clearly"
                         ],
                         resources: [
                             {
@@ -487,21 +503,20 @@ function generateComprehensiveFallbackRoadmap(career, experience, userName) {
             }
         ],
         career_guidance: {
-            job_market_analysis: `The demand for ${careerConfig.title} roles remains strong with competitive salaries. Companies are looking for developers who can build scalable applications and work across the stack.`,
+            job_market_analysis: `The demand for ${careerTitle} roles continues to grow with competitive salaries and opportunities across industries. Companies are looking for practical skills and project experience.`,
             salary_expectations: `Entry-level: $70,000 - $90,000 | Mid-level: $90,000 - $130,000 | Senior: $130,000 - $180,000+`,
             portfolio_projects: [
-                `Build a full-stack web application`,
-                `Create a RESTful API with database integration`,
-                `Develop a responsive frontend application`,
-                `Implement a machine learning model (for ML roles)`,
-                `Containerize and deploy an application`
+                `Build a complete ${careerTitle.toLowerCase()} application`,
+                "Create a portfolio showcasing 3-5 quality projects",
+                "Contribute to open source projects",
+                "Document your learning journey and projects"
             ],
             interview_preparation: [
                 "Data structures and algorithms",
-                "System design questions",
-                "Framework-specific concepts",
-                "Database design and optimization",
-                "Behavioral and situational questions"
+                "System design concepts",
+                "Technical problem solving",
+                "Behavioral interviews",
+                "Project discussions and code reviews"
             ]
         }
     };
@@ -509,36 +524,23 @@ function generateComprehensiveFallbackRoadmap(career, experience, userName) {
 
 async function saveRoadmapData(roadmapData) {
     try {
-        // Update app state
         appState.roadmapData = roadmapData;
         appState.roadmapGenerated = true;
+        appState.targetCareer = roadmapData.career;
         appState.lastGenerated = new Date().toISOString();
         
-        // Also update legacy structure for compatibility
-        appState.analysis = {
-            ...appState.analysis,
-            learning_roadmap: roadmapData
-        };
-
-        // Save to localStorage
         localStorage.setItem('soloLevelingState', JSON.stringify(appState));
         
-        console.log('💾 Roadmap data saved successfully:', {
-            phases: roadmapData.phases?.length || 0,
-            totalWeeks: roadmapData.total_duration_weeks,
-            modules: calculateTotalModules(roadmapData),
-            timestamp: appState.lastGenerated
-        });
-        
+        console.log('💾 Roadmap saved for career:', roadmapData.career);
         return true;
     } catch (error) {
-        console.error('❌ Failed to save roadmap data:', error);
+        console.error('❌ Failed to save roadmap:', error);
         return false;
     }
 }
 
 function displayExistingRoadmap() {
-    console.log('🔄 Displaying existing roadmap from storage');
+    console.log('🔄 Displaying existing roadmap');
     
     const career = appState.userProfile.career;
     const userName = appState.userProfile.name;
@@ -546,22 +548,29 @@ function displayExistingRoadmap() {
     updateBasicUI(career, userName);
     displayRoadmapContent(appState.roadmapData);
     
-    showAINotification('📚 Roadmap loaded from your saved progress!', 'success');
+    showAINotification(`📚 ${getCareerTitle(career)} roadmap loaded!`, 'success');
+}
+
+function updateBasicUI(career, userName) {
+    const careerTitle = getCareerTitle(career);
+    
+    document.getElementById('targetCareerName').textContent = careerTitle;
+    document.getElementById('roadmapDescription').textContent = `Personalized learning path for ${userName}`;
+}
+
+function getCareerTitle(career) {
+    const careerConfig = careerConfigs[career] || careerConfigs['fullstack'];
+    return careerConfig.title;
 }
 
 function displayRoadmapContent(roadmapData) {
-    console.log('🎨 Rendering roadmap content...');
+    console.log('🎨 Rendering roadmap content');
     
-    // Update stats
     updateAIStats(roadmapData);
-    
-    // Display phases and modules
     displayAIPhases(roadmapData.phases || []);
-    
-    // Display career guidance
     displayAIGuidance(roadmapData.career_guidance);
     
-    console.log('✅ Roadmap content rendered successfully');
+    console.log('✅ Roadmap content rendered');
 }
 
 function updateAIStats(roadmap) {
@@ -569,31 +578,6 @@ function updateAIStats(roadmap) {
     document.getElementById('totalWeeks').textContent = roadmap.total_duration_weeks || '24';
     document.getElementById('skillsToLearn').textContent = calculateTotalSkills(roadmap);
     document.getElementById('readinessScore').textContent = (roadmap.readiness_score || 50) + '%';
-    
-    // Update last generated time
-    updateLastGeneratedTime();
-}
-
-function updateLastGeneratedTime() {
-    let lastGeneratedElement = document.getElementById('lastGenerated');
-    if (!lastGeneratedElement) {
-        const statsGrid = document.querySelector('.stats-grid');
-        if (statsGrid) {
-            lastGeneratedElement = document.createElement('div');
-            lastGeneratedElement.id = 'lastGenerated';
-            lastGeneratedElement.className = 'stat-card';
-            lastGeneratedElement.innerHTML = `
-                <div class="stat-value" id="lastGeneratedTime">Just now</div>
-                <div class="stat-label">Last Generated</div>
-            `;
-            statsGrid.appendChild(lastGeneratedElement);
-        }
-    }
-    
-    if (appState.lastGenerated) {
-        const time = new Date(appState.lastGenerated).toLocaleString();
-        document.getElementById('lastGeneratedTime').textContent = time;
-    }
 }
 
 function calculateTotalModules(roadmap) {
@@ -622,8 +606,6 @@ function displayAIPhases(phases) {
         return;
     }
 
-    console.log(`📚 Rendering ${phases.length} phases...`);
-    
     timeline.innerHTML = phases.map((phase, phaseIndex) => {
         return `
         <div class="ai-phase" data-phase="${phase.phase_id}">
@@ -731,13 +713,11 @@ function displayAIPhases(phases) {
                         </div>
                     </div>
                     `;
-                }).join('') : '<p>No modules defined for this phase</p>'}
+                }).join('') : '<p>No modules in this phase</p>'}
             </div>
         </div>
         `;
     }).join('');
-    
-    console.log('✅ All phases rendered successfully');
 }
 
 function displayAIGuidance(guidance) {
@@ -790,7 +770,6 @@ function displayAIGuidance(guidance) {
     `;
 }
 
-// Enhanced programming language detection
 function detectProgrammingLanguage(module) {
     if (!module) return null;
     
@@ -801,14 +780,14 @@ function detectProgrammingLanguage(module) {
     ).toLowerCase();
 
     const languagePatterns = {
-        'JavaScript': ['javascript', 'js', 'react', 'node', 'express', 'frontend', 'web', 'typescript'],
-        'Python': ['python', 'django', 'flask', 'pandas', 'numpy', 'scikit', 'tensorflow', 'pytorch', 'data science', 'machine learning'],
-        'Java': ['java', 'spring', 'hibernate', 'android', 'enterprise', 'jvm'],
-        'C++': ['c++', 'cpp', 'game development', 'system programming', 'embedded'],
-        'C#': ['c#', 'csharp', '.net', 'unity', 'windows', 'asp.net'],
-        'SQL': ['sql', 'database', 'mysql', 'postgresql', 'mongodb', 'query'],
-        'HTML/CSS': ['html', 'css', 'frontend', 'web design', 'responsive'],
-        'TypeScript': ['typescript', 'ts', 'type safety', 'angular']
+        'JavaScript': ['javascript', 'js', 'react', 'node', 'express', 'frontend', 'web'],
+        'Python': ['python', 'django', 'flask', 'pandas', 'numpy', 'data science', 'machine learning'],
+        'Java': ['java', 'spring', 'android', 'enterprise'],
+        'C++': ['c++', 'cpp', 'game development', 'system programming'],
+        'C#': ['c#', 'csharp', '.net', 'unity', 'windows'],
+        'TypeScript': ['typescript', 'ts', 'type safety'],
+        'SQL': ['sql', 'database', 'mysql', 'postgresql'],
+        'HTML/CSS': ['html', 'css', 'frontend', 'web design']
     };
 
     for (const [language, patterns] of Object.entries(languagePatterns)) {
@@ -861,14 +840,9 @@ function showAIErrorState(message) {
                 <button onclick="regenerateRoadmap()" class="retry-button">
                     🔄 Generate New Roadmap
                 </button>
-                <button onclick="loadDemoRoadmap()" class="secondary-button">
-                    🎯 Load Demo Roadmap
+                <button onclick="loadCareerSpecificContent()" class="secondary-button">
+                    🎯 Load Career Content
                 </button>
-                ${appState.roadmapData ? `
-                    <button onclick="displayExistingRoadmap()" class="secondary-button">
-                        📂 Load Last Saved Roadmap
-                    </button>
-                ` : ''}
             </div>
         </div>
     `;
@@ -881,12 +855,42 @@ function showAIEmptyState() {
     timeline.innerHTML = `
         <div class="ai-empty-state">
             <h3>🚀 Ready for AI-Powered Learning?</h3>
-            <p>Your personalized curriculum is being prepared based on your career goals and current skills.</p>
+            <p>Your personalized curriculum is being prepared based on your career goals.</p>
             <button onclick="regenerateRoadmap()" class="cta-button">
                 Generate AI Roadmap
             </button>
         </div>
     `;
+}
+
+function loadCareerSpecificContent() {
+    const career = appState.userProfile.career;
+    const userName = appState.userProfile.name;
+    const experience = appState.userProfile.experience;
+    
+    const roadmap = generateComprehensiveFallback(career, experience, userName);
+    
+    updateAIStats(roadmap);
+    displayAIPhases(roadmap.phases);
+    displayAIGuidance(roadmap.career_guidance);
+    
+    showAINotification(`🎯 ${getCareerTitle(career)} content loaded!`, 'success');
+}
+
+function regenerateRoadmap() {
+    console.log('🔄 User requested roadmap regeneration');
+    
+    appState.roadmapGenerated = false;
+    appState.roadmapData = null;
+    
+    localStorage.setItem('soloLevelingState', JSON.stringify(appState));
+    
+    showAILoadingState();
+    showAINotification('Generating new AI roadmap...', 'info');
+    
+    setTimeout(() => {
+        generateNewRoadmap();
+    }, 1000);
 }
 
 // Module interaction functions
@@ -903,7 +907,7 @@ function startCodingModule(moduleId, programmingLanguage) {
         
         window.location.href = `DSA.html?language=${encodeURIComponent(programmingLanguage)}&module=${encodeURIComponent(moduleName)}&career=${encodeURIComponent(career)}&title=${encodeURIComponent(module.title)}`;
     } else {
-        showAINotification('Module not found in roadmap data', 'error');
+        showAINotification('Module not found', 'error');
     }
 }
 
@@ -916,7 +920,7 @@ function startTheoryModule(moduleId) {
         console.log(`📚 Starting theory module: ${module.title}`);
         window.location.href = 'learning.html';
     } else {
-        showAINotification('Module not found in roadmap data', 'error');
+        showAINotification('Module not found', 'error');
     }
 }
 
@@ -935,9 +939,9 @@ function showCodingPreview(moduleId, programmingLanguage) {
                     <div class="coding-preview">
                         <h4>Programming Language: ${programmingLanguage}</h4>
                         <p><strong>Duration:</strong> ${module.duration_weeks} weeks</p>
-                        <p><strong>What you'll learn:</strong></p>
+                        <p><strong>Skills you'll learn:</strong></p>
                         <ul>
-                            ${module.learning_outcomes ? module.learning_outcomes.map(outcome => `<li>${outcome}</li>`).join('') : '<li>Practical coding skills</li>'}
+                            ${module.technical_skills ? module.technical_skills.map(skill => `<li>${skill}</li>`).join('') : '<li>Practical programming skills</li>'}
                         </ul>
                         <div class="preview-actions">
                             <button class="btn-primary" onclick="startCodingModule('${moduleId}', '${programmingLanguage}')">
@@ -956,9 +960,7 @@ function showCodingPreview(moduleId, programmingLanguage) {
 }
 
 function findAIModule(moduleId) {
-    if (!appState.roadmapData?.phases) {
-        return null;
-    }
+    if (!appState.roadmapData?.phases) return null;
     
     for (const phase of appState.roadmapData.phases) {
         if (phase.modules) {
@@ -969,51 +971,15 @@ function findAIModule(moduleId) {
     return null;
 }
 
-// Roadmap management functions
-function regenerateRoadmap() {
-    console.log('🔄 User requested roadmap regeneration');
-    
-    // Clear existing roadmap data
-    appState.roadmapGenerated = false;
-    appState.roadmapData = null;
-    
-    // Save cleared state
-    saveAIState();
-    
-    // Show loading and generate new roadmap
-    showAILoadingState();
-    showAINotification('Generating new AI roadmap...', 'info');
-    
-    setTimeout(() => {
-        generateNewRoadmap();
-    }, 1000);
-}
-
-function loadDemoRoadmap() {
-    const career = appState.userProfile.career;
-    const userName = appState.userProfile.name;
-    const experience = appState.userProfile.experience;
-    
-    const demoRoadmap = generateComprehensiveFallbackRoadmap(career, experience, userName);
-    
-    updateAIStats(demoRoadmap);
-    displayAIPhases(demoRoadmap.phases);
-    displayAIGuidance(demoRoadmap.career_guidance);
-    
-    showAINotification('Demo roadmap loaded successfully!', 'success');
-}
-
 function saveAIState() {
     try {
         localStorage.setItem('soloLevelingState', JSON.stringify(appState));
-        console.log('💾 App state saved');
     } catch (e) {
-        console.error('❌ App state save failed:', e);
+        console.error('❌ Failed to save state:', e);
     }
 }
 
 function showAINotification(message, type = 'info') {
-    // Remove existing notifications
     document.querySelectorAll('.ai-notification').forEach(notif => notif.remove());
     
     const notification = document.createElement('div');
@@ -1056,89 +1022,4 @@ function showAINotification(message, type = 'info') {
     }, 5000);
 }
 
-// Add enhanced CSS for new elements
-const enhancedStyles = document.createElement('style');
-enhancedStyles.textContent = `
-    .loading-steps {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        margin: 1.5rem 0;
-        text-align: left;
-        max-width: 300px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    
-    .loading-step {
-        padding: 0.5rem;
-        border-radius: 6px;
-        background: #f7fafc;
-        transition: all 0.3s ease;
-    }
-    
-    .loading-step.active {
-        background: #667eea;
-        color: white;
-        font-weight: bold;
-    }
-    
-    .loading-note {
-        font-size: 0.9rem;
-        color: #718096;
-        margin-top: 1rem;
-    }
-    
-    .coding-module {
-        border-left: 4px solid #4cc9f0;
-    }
-    
-    .coding-start {
-        background: linear-gradient(135deg, #4cc9f0, #4361ee);
-    }
-    
-    .coding-start:hover {
-        background: linear-gradient(135deg, #3aa8d8, #3a0ca3);
-        transform: translateY(-2px);
-    }
-    
-    .error-actions {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        margin-top: 1.5rem;
-        flex-wrap: wrap;
-    }
-    
-    .retry-button, .secondary-button, .cta-button {
-        background: #667eea;
-        color: white;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-    
-    .secondary-button {
-        background: #e2e8f0;
-        color: #4a5568;
-    }
-    
-    .secondary-button:hover {
-        background: #cbd5e0;
-    }
-    
-    .ai-loading-state, .ai-error-state, .ai-empty-state {
-        text-align: center;
-        padding: 3rem 2rem;
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin: 2rem 0;
-    }
-`;
-document.head.appendChild(enhancedStyles);
-
-console.log('✅ Enhanced Roadmap System Ready');
+console.log('✅ OpenAI-Powered Roadmap System Ready');
