@@ -905,8 +905,7 @@ function startCodingModule(moduleId, programmingLanguage) {
         const moduleName = module.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
         const career = appState.userProfile.career;
         
-        window.location.href = `DSA.html?language=${encodeURIComponent(programmingLanguage)}&module=${encodeURIComponent(moduleName)}&career=${encodeURIComponent(career)}&title=${encodeURIComponent(module.title)}`;
-    } else {
+window.location.href = `dsa.html?language=${encodeURIComponent(programmingLanguage)}&module=${encodeURIComponent(moduleName)}&career=${encodeURIComponent(career)}&title=${encodeURIComponent(module.title)}`;    } else {
         showAINotification('Module not found', 'error');
     }
 }
